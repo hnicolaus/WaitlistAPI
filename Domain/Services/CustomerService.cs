@@ -14,7 +14,7 @@ namespace Domain.Services
             _customerRepository = waitlistRepository;
         }
 
-        public Customer GetCustomer(int customerId)
+        public Customer GetCustomer(string customerId)
         {
             return _customerRepository.GetCustomer(customerId);
         }
@@ -26,7 +26,7 @@ namespace Domain.Services
                 throw new Exception("Customer e-mail cannot be null or empty.");
             }
 
-            var customer = _customerRepository.GetCustomerByEmail(request.Email);
+            var customer = _customerRepository.GetCustomer(request.Id);
             if (customer == null)
             {
                 customer = new Customer(request);

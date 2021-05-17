@@ -1,10 +1,13 @@
-﻿using DomainCreateWaitlistRequest = Domain.Requests.CreateWaitlistRequest;
+﻿using System.ComponentModel.DataAnnotations;
+using DomainCreateWaitlistRequest = Domain.Requests.CreateWaitlistRequest;
 
 namespace Api.Requests
 {
     public class CreateWaitlistRequest
     {
-        public int CustomerId { get; set; }
+        [Required]
+        public string CustomerId { get; set; }
+        [Required]
         public int PartySize { get; set; }
 
         public DomainCreateWaitlistRequest ToDomain()

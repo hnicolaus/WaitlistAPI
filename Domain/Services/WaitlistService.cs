@@ -35,12 +35,12 @@ namespace Domain.Services
             _waitlistRepository.Save();
         }
 
-        public IEnumerable<Waitlist> GetWaitlists(int customerId, bool? isActive)
+        public IEnumerable<Waitlist> GetWaitlists(string customerId, bool? isActive)
         {
             return _waitlistRepository.GetWaitlists(customerId, isActive);
         }
 
-        private Waitlist GetActiveWaitlist(int customerId)
+        private Waitlist GetActiveWaitlist(string customerId)
         {
             return GetWaitlists(customerId, isActive: true).SingleOrDefault();
         }

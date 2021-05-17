@@ -5,9 +5,9 @@ namespace Domain.Repositories
 {
     public interface IWaitlistRepository
     {
-        IEnumerable<Waitlist> GetWaitlists(int customerId, bool? isActive);
+        IEnumerable<Waitlist> GetWaitlists(string customerId, bool? isActive);
         void Add(Waitlist waitlist);
         void Save();
-        Customer GetCustomer(int customerId);
+        Customer GetCustomer(string customerId);
     }
 }

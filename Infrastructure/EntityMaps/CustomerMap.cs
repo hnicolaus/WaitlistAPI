@@ -10,7 +10,7 @@ namespace Infrastructure.ModelMaps
         {
             builder.ToTable(schema: "dbo", name: "Customer").HasKey(w => w.Id);
 
-            builder.Property(w => w.Id).ValueGeneratedOnAdd();
+            builder.Property(w => w.Id);
             builder.Property(w => w.FirstName).HasColumnName(nameof(Customer.FirstName));
             builder.Property(w => w.LastName).HasColumnName(nameof(Customer.LastName));
             builder.Property(w => w.Email).HasColumnName(nameof(Customer.Email));

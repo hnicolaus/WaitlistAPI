@@ -14,6 +14,7 @@ namespace Domain.Models
 
         public Customer(CreateCustomerRequest request)
         {
+            Id = request.Id;
             FirstName = request.FirstName;
             LastName = request.LastName;
             Email = request.Email;
@@ -22,7 +23,7 @@ namespace Domain.Models
             CreatedDateTime = DateTime.Now;
         }
 
-        public int Id { get; set; }
+        public string Id { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Email { get; set; }

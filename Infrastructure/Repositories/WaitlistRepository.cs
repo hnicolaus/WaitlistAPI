@@ -15,7 +15,7 @@ namespace Infrastructure.Repositories
             _context = context;
         }
 
-        public IEnumerable<Waitlist> GetWaitlists(int customerId, bool? isActive = null)
+        public IEnumerable<Waitlist> GetWaitlists(string customerId, bool? isActive = null)
         {
             var waitlists = _context.Waitlists.AsQueryable()
                 .Where(waitlist => waitlist.CustomerId == customerId);
@@ -45,7 +45,7 @@ namespace Infrastructure.Repositories
             _context.Save();
         }
 
-        public Customer GetCustomer(int customerId)
+        public Customer GetCustomer(string customerId)
         {
             return _context.Customers.AsQueryable().SingleOrDefault(customer => customer.Id == customerId);
         }

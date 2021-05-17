@@ -38,16 +38,17 @@ namespace Api.Helpers
     {
         public GoogleUser(Payload validatedPayload)
         {
+            Id = validatedPayload.Subject;
             FirstName = validatedPayload.GivenName;
             LastName = validatedPayload.FamilyName;
             UserId = validatedPayload.Subject;
             Email = validatedPayload.Email;
         }
 
+        public string Id { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string UserId { get; }
         public string Email { get; set; }
-
     }
 }

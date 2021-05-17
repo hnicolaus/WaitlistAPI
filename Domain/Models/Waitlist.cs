@@ -9,7 +9,7 @@ namespace Domain.Models
         {
         }
 
-        public Waitlist(int customerId, int partySize)
+        public Waitlist(string customerId, int partySize)
         {
             CustomerId = customerId;
             PartySize = partySize;
@@ -20,7 +20,7 @@ namespace Domain.Models
 
         public int Id { get; set; }
         public Customer Customer { get; set; }
-        public int CustomerId { get; set; }
+        public string CustomerId { get; set; }
         public int PartySize { get; set; }
         public DateTime CreatedDateTime { get; set; }
         public bool IsNotified { get; set; }

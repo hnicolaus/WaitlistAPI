@@ -14,7 +14,7 @@ namespace Api.Models
         }
 
         public int Id { get; set; }
-        public int CustomerId { get; set; }
+        public string CustomerId { get; set; }
         public int PartySize { get; set; }
         public DateTime CreatedDateTime { get; set; }
     }

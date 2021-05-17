@@ -14,31 +14,14 @@ namespace Infrastructure.Repositories
             _context = context;
         }
 
-        public Customer GetCustomer(int customerId)
+        public Customer GetCustomer(string customerId)
         {
             return _context.Customers.SingleOrDefault(customer => customer.Id == customerId);
         }
 
-        public Customer GetCustomerByEmail(string email)
-        {
-            return _context.Customers.SingleOrDefault(customer => customer.Email == email);
-        }
-
-        public Customer GetCustomer(string phoneNumber)
-        {
-            return _context.Customers.SingleOrDefault(customer => customer.PhoneNumber.Equals(phoneNumber));
-        }
-
         public void Add(Customer customer)
         {
-            if (customer.Id == 0)
-            {
-                _context.Customers.Add(customer);
-            }
-            else
-            {
-                _context.Customers.Update(customer);
-            }
+            _context.Customers.Add(customer);
         }
 
         public void SaveChanges()

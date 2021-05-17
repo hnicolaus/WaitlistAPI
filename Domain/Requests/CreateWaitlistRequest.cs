@@ -2,10 +2,10 @@
 {
     public class CreateWaitlistRequest
     {
-        public int CustomerId { get; set; }
+        public string CustomerId { get; set; }
         public int PartySize { get; set; }
 
-        public CreateWaitlistRequest(int customerId, int partySize)
+        public CreateWaitlistRequest(string customerId, int partySize)
         {
             CustomerId = customerId;
             PartySize = partySize;

@@ -25,8 +25,13 @@ namespace Api.Controllers
 
         [HttpGet]
         [Route("{id}", Name = "GetCustomer")]
-        public IActionResult GetCustomer(int id)
+        public IActionResult GetCustomer(string id)
         {
+            if (string.IsNullOrEmpty(id))
+            {
+                return BadRequest("Id cannot be empty.");
+            }
+
             var domainCustomer = _customerService.GetCustomer(id);
             if (domainCustomer == null)
             {
@@ -38,8 +43,12 @@ namespace Api.Controllers
 
         [HttpPatch]
         [Route("{id}")]
-        public IActionResult UpdateCustomer(int id, [FromBody] JsonPatchDocument<DomainCustomer> patchDoc)
+        public IActionResult UpdateCustomer(string id, [FromBody] JsonPatchDocument<DomainCustomer> patchDoc)
         {
+            if (string.IsNullOrEmpty(id))
+            {
+                return BadRequest("Id cannot be empty.");
+            }
             if (patchDoc == null || !patchDoc.Operations.Any())
             {
                 return BadRequest("Request cannot be empty.");
@@ -88,7 +97,7 @@ namespace Api.Controllers
                 return BadRequest("Google ID token is invalid");
             }
 
-            var domainRequest = new DomainCreateCustomerRequest(user.FirstName, user.LastName, user.Email);
+            var domainRequest = new DomainCreateCustomerRequest(user.Id, user.FirstName, user.LastName, user.Email);
             var domainCustomer = _customerService.GetOrCreateCustomer(domainRequest);
 
             var apiCustomer = new Customer(domainCustomer);

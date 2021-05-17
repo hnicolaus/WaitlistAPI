@@ -1,8 +1,8 @@
-﻿using Domain;
+﻿using Domain.Models;
 using Infrastructure.ModelMaps;
 using Microsoft.EntityFrameworkCore;
 
-namespace Infrastructure
+namespace Infrastructure.DbContexts
 {
     public class WaitlistDbContext : DbContext, IWaitlistDbContext
     {
@@ -17,6 +17,7 @@ namespace Infrastructure
         {
             base.OnModelCreating(builder);
             builder.ApplyConfiguration(new WaitlistMap());
+            builder.ApplyConfiguration(new CustomerMap());
         }
 
         public void Save() => base.SaveChanges();

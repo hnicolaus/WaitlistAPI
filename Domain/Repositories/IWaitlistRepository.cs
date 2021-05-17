@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using Domain.Models;
+using System.Collections.Generic;
 
-namespace Domain
+namespace Domain.Repositories
 {
     public interface IWaitlistRepository
     {

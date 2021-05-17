@@ -1,4 +1,4 @@
-﻿namespace Domain
+﻿namespace Domain.Requests
 {
     public class CreateWaitlistRequest
     {

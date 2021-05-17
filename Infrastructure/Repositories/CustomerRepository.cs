@@ -1,7 +1,9 @@
-﻿using Domain;
+﻿using Domain.Models;
+using Domain.Repositories;
+using Infrastructure.DbContexts;
 using System.Linq;
 
-namespace Infrastructure
+namespace Infrastructure.Repositories
 {
     public class CustomerRepository : ICustomerRepository
     {
@@ -15,6 +17,11 @@ namespace Infrastructure
         public Customer GetCustomer(int customerId)
         {
             return _context.Customers.SingleOrDefault(customer => customer.Id == customerId);
+        }
+
+        public Customer GetCustomerByEmail(string email)
+        {
+            return _context.Customers.SingleOrDefault(customer => customer.Email == email);
         }
 
         public Customer GetCustomer(string phoneNumber)
@@ -34,7 +41,7 @@ namespace Infrastructure
             }
         }
 
-        public void Save()
+        public void SaveChanges()
         {
             _context.Save();
         }

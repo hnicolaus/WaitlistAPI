@@ -1,8 +1,10 @@
-﻿using Domain;
+﻿using Domain.Models;
+using Domain.Repositories;
+using Infrastructure.DbContexts;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Infrastructure
+namespace Infrastructure.Repositories
 {
     public class WaitlistRepository : IWaitlistRepository
     {

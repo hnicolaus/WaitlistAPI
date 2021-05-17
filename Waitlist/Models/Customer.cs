@@ -1,28 +1,26 @@
 ﻿using System;
+using DomainCustomer = Domain.Models.Customer;
 
-namespace Api
+
+namespace Api.Models
 {
     public class Customer
     {
-        public Customer(Domain.Customer domainCustomer)
+        public Customer(DomainCustomer domainCustomer)
         {
             Id = domainCustomer.Id;
-            UserName = domainCustomer.UserName;
             FirstName = domainCustomer.FirstName;
             LastName = domainCustomer.LastName;
-            Address = domainCustomer.Address;
+            Email = domainCustomer.Email;
             PhoneNumber = domainCustomer.PhoneNumber;
-            DateOfBirth = domainCustomer.DateOfBirth;
             CreatedDateTime = domainCustomer.CreatedDateTime;
         }
 
         public int Id { get; set; }
-        public string UserName { get; set; }
+        public string Email { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
-        public string Address { get; set; }
         public string PhoneNumber { get; set; }
-        public DateTime DateOfBirth { get; set; }
         public DateTime CreatedDateTime { get; set; }
     }
 }

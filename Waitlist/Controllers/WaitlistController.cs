@@ -1,4 +1,6 @@
-﻿using Domain;
+﻿using Api.Models;
+using Api.Requests;
+using Domain.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 
@@ -8,7 +10,7 @@ namespace Api.Controllers
     [Route("waitlists")]
     public class WaitlistController : ControllerBase
     {
-        public WaitlistService _waitlistService;
+        public readonly WaitlistService _waitlistService;
 
         public WaitlistController(WaitlistService waitlistService)
         {
@@ -20,7 +22,7 @@ namespace Api.Controllers
         {
             if (customerId == null)
             {
-                return BadRequest(new { errorMessage = "customerId query string must be specified" });
+                return BadRequest(new { ErrorMessage = "customerId query string must be specified" });
             }
 
             var domainWaitlists = _waitlistService.GetWaitlists(customerId.Value, isActive);
@@ -34,6 +36,7 @@ namespace Api.Controllers
         {
             var domainRequest = request.ToDomain();
             _waitlistService.CreateWaitlist(domainRequest);
+
             return Ok();
         }
     }

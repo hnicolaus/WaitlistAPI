@@ -1,10 +1,11 @@
 ﻿using System;
+using DomainWaitlist = Domain.Models.Waitlist;
 
-namespace Api
+namespace Api.Models
 {
     public class Waitlist
     {
-        public Waitlist(Domain.Waitlist domainWaitlist)
+        public Waitlist(DomainWaitlist domainWaitlist)
         {
             Id = domainWaitlist.Id;
             CustomerId = domainWaitlist.CustomerId;

@@ -1,9 +1,12 @@
-﻿namespace Domain
+﻿using Domain.Models;
+
+namespace Domain.Repositories
 {
     public interface ICustomerRepository
     {
         Customer GetCustomer(int customerId);
         void Add(Customer waitlist);
-        void Save();
+        Customer GetCustomerByEmail(string email);
+        void SaveChanges();
     }
 }

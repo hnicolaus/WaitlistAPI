@@ -1,4 +1,4 @@
-﻿using Domain;
+﻿using Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -6,6 +6,15 @@ namespace Infrastructure.ModelMaps
 {
     public class WaitlistMap : IEntityTypeConfiguration<Waitlist>
     {
+        /**
+         * specify entity configuration in a separate class
+         * instead of in directly in DbContext.OnModelCreating(ModelBuilder modelBuilder), i.e.
+         * modelBuilder.Entity<Waitlist>(entity =>
+         * {
+         *     entity.Property(e => e.Id).HasColumnName("Id");
+         *     ...
+         * });
+         */
         public void Configure(EntityTypeBuilder<Waitlist> builder)
         {
             builder.ToTable(schema: "dbo", name: "Waitlist").HasKey(w => w.Id);

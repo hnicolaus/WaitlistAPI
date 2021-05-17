@@ -1,8 +1,11 @@
-﻿using System;
+﻿using Domain.Models;
+using Domain.Repositories;
+using Domain.Requests;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Domain
+namespace Domain.Services
 {
     public class WaitlistService
     {

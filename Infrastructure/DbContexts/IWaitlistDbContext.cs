@@ -1,7 +1,7 @@
-﻿using Domain;
+﻿using Domain.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace Infrastructure
+namespace Infrastructure.DbContexts
 {
     public interface IWaitlistDbContext
     {

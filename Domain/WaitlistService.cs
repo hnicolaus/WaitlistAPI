@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Domain
@@ -14,27 +15,31 @@ namespace Domain
 
         public void CreateWaitlist(CreateWaitlistRequest request)
         {
-            if (request.UserName == null)
+            var customer = _waitlistRepository.GetCustomer(request.CustomerId);
+            if (customer == null)
             {
-                throw new Exception("UserName cannot be null");
+                throw new Exception("Requested customer does not exist.");
             }
 
-            var existingWaitlist = GetActiveWaitlist(request.UserName);
-            if (existingWaitlist != null)
+            var activeWaitlist = GetActiveWaitlist(request.CustomerId);
+            if (activeWaitlist != null)
             {
                 throw new Exception("User has an existing active waitlist");
             }
             
-
-            var waitlist = new Waitlist(request.UserName, request.PartySize);
+            var waitlist = new Waitlist(request.CustomerId, request.PartySize);
             _waitlistRepository.Add(waitlist);
             _waitlistRepository.Save();
         }
 
-        public Waitlist GetActiveWaitlist(string userName)
+        public IEnumerable<Waitlist> GetWaitlists(int customerId, bool? isActive)
         {
-            return _waitlistRepository.GetWaitlists(userName)
-                .SingleOrDefault(waitlist => waitlist.IsActive);
+            return _waitlistRepository.GetWaitlists(customerId, isActive);
+        }
+
+        private Waitlist GetActiveWaitlist(int customerId)
+        {
+            return GetWaitlists(customerId, isActive: true).SingleOrDefault();
         }
     }
 }

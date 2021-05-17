@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31205.134
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Waitlist", "Waitlist\Waitlist.csproj", "{4065AC1B-C4D8-49B8-BC4A-8174EE12B118}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Api", "Waitlist\Api.csproj", "{4065AC1B-C4D8-49B8-BC4A-8174EE12B118}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain", "Domain\Domain.csproj", "{8AB0D461-82E9-42C2-B5E3-CE50C446890E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure", "Infrastructure\Infrastructure.csproj", "{A5D07C10-39D2-4A60-B78F-29B9B17FEB42}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Infrastructure", "Infrastructure\Infrastructure.csproj", "{A5D07C10-39D2-4A60-B78F-29B9B17FEB42}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

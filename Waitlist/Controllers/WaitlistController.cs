@@ -1,10 +1,11 @@
 ﻿using Domain;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq;
 
-namespace Waitlist.Controllers
+namespace Api.Controllers
 {
     [ApiController]
-    [Route("waitlist")]
+    [Route("waitlists")]
     public class WaitlistController : ControllerBase
     {
         public WaitlistService _waitlistService;
@@ -15,17 +16,17 @@ namespace Waitlist.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetWaitlist(string userName)
+        public IActionResult GetWaitlists(int? customerId, bool? isActive)
         {
-            var domainWaitlist = _waitlistService.GetActiveWaitlist(userName);
-            if (domainWaitlist == null)
+            if (customerId == null)
             {
-                //throw new System.Exception($"Active waitlist for userName {userName} is not found");
-                return new NotFoundResult();
-            
+                return BadRequest(new { errorMessage = "customerId query string must be specified" });
             }
-            var apiWaitlist = new Waitlist(domainWaitlist);
-            return new OkObjectResult(apiWaitlist);
+
+            var domainWaitlists = _waitlistService.GetWaitlists(customerId.Value, isActive);
+
+            var apiWaitlists = domainWaitlists.Select(domainWaitlist => new Waitlist(domainWaitlist));
+            return Ok(apiWaitlists);
         }
 
         [HttpPost]

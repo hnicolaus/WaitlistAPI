@@ -13,8 +13,18 @@ namespace Infrastructure
             _context = context;
         }
 
-        public IEnumerable<Waitlist> GetWaitlists(string userName)
-            => _context.Waitlists.AsQueryable().Where(waitlist => waitlist.UserName == userName).ToList();
+        public IEnumerable<Waitlist> GetWaitlists(int customerId, bool? isActive = null)
+        {
+            var waitlists = _context.Waitlists.AsQueryable()
+                .Where(waitlist => waitlist.CustomerId == customerId);
+
+            if (isActive != null)
+            {
+                waitlists.Where(waitlist => waitlist.IsActive == isActive.Value);
+            }
+
+            return waitlists.ToList();
+        }
 
         public void Add(Waitlist waitlist)
         {
@@ -31,6 +41,11 @@ namespace Infrastructure
         public void Save()
         {
             _context.Save();
+        }
+
+        public Customer GetCustomer(int customerId)
+        {
+            return _context.Customers.AsQueryable().SingleOrDefault(customer => customer.Id == customerId);
         }
     }
 }

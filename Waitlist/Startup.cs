@@ -8,7 +8,7 @@ using Microsoft.OpenApi.Models;
 using Domain;
 using Infrastructure;
 
-namespace Waitlist
+namespace Api
 {
     public class Startup
     {
@@ -35,6 +35,8 @@ namespace Waitlist
                 }
             ));
             services.AddTransient<WaitlistService>();
+            services.AddTransient<CustomerService>();
+            services.AddTransient<ICustomerRepository, CustomerRepository>();
             services.AddTransient<IWaitlistRepository, WaitlistRepository>();
             services.AddScoped<IWaitlistDbContext, WaitlistDbContext>();
             services.AddSwaggerGen(c =>

@@ -1,20 +1,28 @@
-﻿namespace Domain
+﻿using System;
+
+namespace Domain
 {
     public class Waitlist
     {
-        public Waitlist(string userName, int partySize)
+        //EF requires empty ctor for model binding
+        public Waitlist()
         {
-            UserName = userName;
+        }
+
+        public Waitlist(int customerId, int partySize)
+        {
+            CustomerId = customerId;
             PartySize = partySize;
-            CreatedDateTime = System.DateTime.Now;
+            CreatedDateTime = DateTime.Now;
             IsNotified = false;
             IsActive = true;
         }
 
         public int Id { get; set; }
-        public string UserName { get; set; }
+        public Customer Customer { get; set; }
+        public int CustomerId { get; set; }
         public int PartySize { get; set; }
-        public System.DateTime CreatedDateTime { get; set; }
+        public DateTime CreatedDateTime { get; set; }
         public bool IsNotified { get; set; }
         public bool IsActive { get; set; }
     }

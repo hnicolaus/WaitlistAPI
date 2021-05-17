@@ -7,6 +7,7 @@ namespace Infrastructure
     public class WaitlistDbContext : DbContext, IWaitlistDbContext
     {
         public DbSet<Waitlist> Waitlists { get ; set; }
+        public DbSet<Customer> Customers { get ; set; }
 
         public WaitlistDbContext(DbContextOptions options) : base(options)
         {

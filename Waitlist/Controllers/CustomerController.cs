@@ -1,12 +1,11 @@
 ﻿using Api.Helpers;
 using Api.Models;
-using Api.Requests;
 using Domain.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
-using System;
 using System.Linq;
-using DomainCreateCustomerRequest = Domain.Requests.CreateCustomerRequest;
+using System.Security.Claims;
 using DomainCustomer = Domain.Models.Customer;
 
 namespace Api.Controllers
@@ -23,6 +22,7 @@ namespace Api.Controllers
             _customerService = waitlistService;
         }
 
+        [Authorize]
         [HttpGet]
         [Route("{id}", Name = "GetCustomer")]
         public IActionResult GetCustomer(string id)
@@ -30,6 +30,12 @@ namespace Api.Controllers
             if (string.IsNullOrEmpty(id))
             {
                 return BadRequest("Id cannot be empty.");
+            }
+
+            var tokenUserId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            if (tokenUserId != id)
+            {
+                return Unauthorized("Unauthorized to access resource");
             }
 
             var domainCustomer = _customerService.GetCustomer(id);
@@ -82,26 +88,6 @@ namespace Api.Controllers
 
             _customerService.SaveChanges();
             return Ok();
-        }
-
-        //Google sign-in is the only way to sign-up/sign-in.
-        //Treat every successful Google sign-in as if they are an existing user.
-        [HttpPost]
-        [Route("google-sign-in")]
-        public IActionResult GoogleUserSignIn(GoogleUserSignInRequest request)
-        {
-            //Keep Domain project focused on business logic and isolated from GoogleUser validation and concept.
-            GoogleUser user;
-            if (!Validator.ValidateGoogleUser(request.IdToken, out user))
-            {
-                return BadRequest("Google ID token is invalid");
-            }
-
-            var domainRequest = new DomainCreateCustomerRequest(user.Id, user.FirstName, user.LastName, user.Email);
-            var domainCustomer = _customerService.GetOrCreateCustomer(domainRequest);
-
-            var apiCustomer = new Customer(domainCustomer);
-            return CreatedAtRoute(nameof(GetCustomer), new { id = apiCustomer.Id }, apiCustomer);
         }
     }
 }

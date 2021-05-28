@@ -2,7 +2,7 @@
 
 namespace Api.Requests
 {
-    public class GoogleUserSignInRequest
+    public class AuthenticationRequest
     {
         [Required]
         public string IdToken { get; set; }

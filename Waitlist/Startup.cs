@@ -13,6 +13,11 @@ using Infrastructure.DbContexts;
 using Domain.Services;
 using Domain.Repositories;
 using Infrastructure.Repositories;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System;
+using Domain;
 
 namespace Api
 {
@@ -36,6 +41,15 @@ namespace Api
             {
                 options.InputFormatters.Insert(0, GetJsonPatchInputFormatter());
             });
+
+            //Symmetric Auth: same key is used for both signing & validating bearer tokens.
+            IConfigurationSection encryptionSection = Configuration.GetSection("Encryption");
+            Encryption encryptionConfig = encryptionSection.Get<Encryption>(); //map appsettings.json to Encryption object
+            byte[] symmetricKey = Encoding.UTF8.GetBytes(encryptionConfig.SymmetricKey);
+            services.AddAuthentication(symmetricKey);
+
+            services.Configure<Encryption>(encryptionSection); //Allows the Encryption instance to be injected in TokenService's ctor
+
             services.AddDbContext<WaitlistDbContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("WaitlistDbContext"), options =>
                 {
@@ -43,8 +57,11 @@ namespace Api
                     options.UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery); //EF Core default
                 }
             ));
+
             services.AddTransient<WaitlistService>();
             services.AddTransient<CustomerService>();
+            services.AddTransient<AuthenticationService>();
+            services.AddTransient<TokenService>();
             services.AddTransient<ICustomerRepository, CustomerRepository>();
             services.AddTransient<IWaitlistRepository, WaitlistRepository>();
             services.AddScoped<IWaitlistDbContext, WaitlistDbContext>();
@@ -84,12 +101,46 @@ namespace Api
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
             });
+        }
+    }
+
+    public static class AuthenticationServiceCollectionExtensions
+    {
+        public static IServiceCollection AddAuthentication(this IServiceCollection services, byte[] symmetricKey)
+        {
+            services.AddAuthentication(authOptions =>
+            {
+                authOptions.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                authOptions.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+                .AddJwtBearer(jwtOptions =>
+                {
+                    jwtOptions.SaveToken = true; //saves access token per request to be retrieved in controllers via HttpContext.Request.Headers[HeaderNames.Authorization]
+                    jwtOptions.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateAudience = false, //uncomment line below when set to true
+                        //ValidAudiences = new[] { "front_end_client_id_1", "front_end_client_id_2", "..." },
+                        ValidateIssuer = false,
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(symmetricKey),
+                        ValidateLifetime = true,
+                        LifetimeValidator = LifetimeValidator
+                    };
+                });
+
+            return services;
+        }
+
+        private static bool LifetimeValidator(DateTime? notBefore, DateTime? expires, SecurityToken securityToken, TokenValidationParameters validationParameters)
+        {
+            return expires != null && expires > DateTime.Now;
         }
     }
 }

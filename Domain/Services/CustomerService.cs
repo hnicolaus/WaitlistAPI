@@ -1,7 +1,6 @@
 ﻿using Domain.Models;
 using Domain.Repositories;
 using Domain.Requests;
-using System;
 
 namespace Domain.Services
 {
@@ -16,24 +15,25 @@ namespace Domain.Services
 
         public Customer GetCustomer(string customerId)
         {
-            return _customerRepository.GetCustomer(customerId);
+            var customer = _customerRepository.GetCustomer(customerId);
+            if (customer == null)
+            {
+                throw new CustomerNotFoundException(customerId);
+            }
+
+            return customer;
         }
 
-        public Customer GetOrCreateCustomer(CreateCustomerRequest request)
+        public Customer CreateCustomer(CreateCustomerRequest request)
         {
             if (request.Email == null || request.Email == "")
             {
-                throw new Exception("Customer e-mail cannot be null or empty.");
+                throw new InvalidRequestException("Customer e-mail cannot be null or empty.");
             }
 
-            var customer = _customerRepository.GetCustomer(request.Id);
-            if (customer == null)
-            {
-                customer = new Customer(request);
-                
-                _customerRepository.Add(customer);
-                SaveChanges();
-            }
+            var customer =  new Customer(request);
+            _customerRepository.Add(customer);
+            SaveChanges();
 
             return customer;
         }

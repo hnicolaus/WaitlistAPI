@@ -1,7 +1,7 @@
-﻿using Domain.Requests;
+﻿using Domain.Models;
+using Domain.Requests;
 using System;
 using static Google.Apis.Auth.GoogleJsonWebSignature;
-
 
 namespace Domain.Services
 {
@@ -25,8 +25,17 @@ namespace Domain.Services
                 return false;
             }
 
-            var createCustomerRequest = new CreateCustomerRequest(validatedPayload.Subject, validatedPayload.GivenName, validatedPayload.FamilyName, validatedPayload.Email);
-            var customer = _customerService.GetOrCreateCustomer(createCustomerRequest);
+            var customerId = validatedPayload.Subject;
+            Customer customer;
+            try
+            {
+                customer = _customerService.GetCustomer(customerId);
+            }
+            catch (CustomerNotFoundException)
+            {
+                var createCustomerRequest = new CreateCustomerRequest(validatedPayload.Subject, validatedPayload.GivenName, validatedPayload.FamilyName, validatedPayload.Email);
+                customer = _customerService.CreateCustomer(createCustomerRequest);
+            }
 
             jwtToken = _tokenService.GetToken(customer.Id);
             return true;

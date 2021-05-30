@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Domain.Requests;
+using System;
 
 namespace Domain.Models
 {
@@ -9,10 +10,10 @@ namespace Domain.Models
         {
         }
 
-        public Waitlist(string customerId, int partySize)
+        public Waitlist(CreateWaitlistRequest request)
         {
-            CustomerId = customerId;
-            PartySize = partySize;
+            CustomerId = request.CustomerId;
+            PartySize = request.PartySize;
             CreatedDateTime = DateTime.Now;
             IsNotified = false;
             IsActive = true;

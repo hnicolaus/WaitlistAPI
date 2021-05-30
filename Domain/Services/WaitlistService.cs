@@ -1,7 +1,6 @@
 ﻿using Domain.Models;
 using Domain.Repositories;
 using Domain.Requests;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -9,28 +8,26 @@ namespace Domain.Services
 {
     public class WaitlistService
     {
+        public CustomerService _customerService;
         public IWaitlistRepository _waitlistRepository;
 
-        public WaitlistService(IWaitlistRepository waitlistRepository)
+        public WaitlistService(CustomerService customerService, IWaitlistRepository waitlistRepository)
         {
+            _customerService = customerService;
             _waitlistRepository = waitlistRepository;
         }
 
         public void CreateWaitlist(CreateWaitlistRequest request)
         {
-            var customer = _waitlistRepository.GetCustomer(request.CustomerId);
-            if (customer == null)
-            {
-                throw new Exception("Requested customer does not exist.");
-            }
+            var customer = _customerService.GetCustomer(request.CustomerId);
 
-            var activeWaitlist = GetActiveWaitlist(request.CustomerId);
+            var activeWaitlist = GetActiveWaitlist(customer.Id);
             if (activeWaitlist != null)
             {
-                throw new Exception("User has an existing active waitlist");
+                throw new InvalidRequestException($"Customer {customer.Id} has an existing active waitlist");
             }
             
-            var waitlist = new Waitlist(request.CustomerId, request.PartySize);
+            var waitlist = new Waitlist(request);
             _waitlistRepository.Add(waitlist);
             _waitlistRepository.Save();
         }

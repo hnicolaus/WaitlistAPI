@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
-using System.Security.Claims;
+using System.Net;
 using DomainCustomer = Domain.Models.Customer;
 
 namespace Api.Controllers
@@ -25,59 +25,47 @@ namespace Api.Controllers
         [Authorize]
         [HttpGet]
         [Route("{id}", Name = "GetCustomer")]
+        [MapException(new[] { typeof(CustomerNotFoundException), typeof(InvalidRequestException) },
+            new[] { HttpStatusCode.NotFound, HttpStatusCode.BadRequest })]
         public IActionResult GetCustomer(string id)
         {
             if (string.IsNullOrEmpty(id))
             {
-                return BadRequest("Id cannot be empty.");
-            }
-
-            var tokenUserId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
-            if (tokenUserId != id)
-            {
-                return Unauthorized("Unauthorized to access resource");
+                throw new InvalidRequestException("Id cannot be empty.");
             }
 
             var domainCustomer = _customerService.GetCustomer(id);
-            if (domainCustomer == null)
-            {
-                return NotFound();
-            }
 
-            return Ok(new Customer(domainCustomer));
+            var result = new Customer(domainCustomer);
+            return Ok(result);
         }
 
         [HttpPatch]
         [Route("{id}")]
+        [MapException(new[] { typeof(CustomerNotFoundException), typeof(InvalidRequestException) },
+            new[] { HttpStatusCode.NotFound, HttpStatusCode.BadRequest })]
         public IActionResult UpdateCustomer(string id, [FromBody] JsonPatchDocument<DomainCustomer> patchDoc)
         {
             if (string.IsNullOrEmpty(id))
             {
-                return BadRequest("Id cannot be empty.");
+                throw new InvalidRequestException("Id cannot be empty.");
             }
             if (patchDoc == null || !patchDoc.Operations.Any())
             {
-                return BadRequest("Request cannot be empty.");
+                throw new InvalidRequestException("Request cannot be empty.");
             }
 
             var requestedFields = patchDoc.Operations.Select(o => o.path);
             var restrictedFields = requestedFields.Where(field => !field.Equals(_phoneNumberPatchPath));
             if (restrictedFields.Any())
             {
-                return BadRequest("Cannot update the following restricted field(s): " + string.Join(", ", restrictedFields));
+                throw new InvalidRequestException("Cannot update the following restricted field(s): " + string.Join(", ", restrictedFields));
             }
 
             var requestedPhoneNumber = patchDoc.Operations.First(o => o.path.Equals(_phoneNumberPatchPath)).value.ToString();
-            if (!Validator.ValidatePhoneNumber(requestedPhoneNumber))
-            {
-                return BadRequest("Phone number format is invalid");
-            }
+            Validator.ValidatePhoneNumber(requestedPhoneNumber);
 
             var domainCustomer = _customerService.GetCustomer(id);
-            if (domainCustomer == null)
-            {
-                return NotFound();
-            }
 
             patchDoc.ApplyTo(domainCustomer, ModelState);
 

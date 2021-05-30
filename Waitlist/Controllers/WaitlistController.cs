@@ -3,6 +3,7 @@ using Api.Requests;
 using Domain.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
+using System.Net;
 
 namespace Api.Controllers
 {
@@ -18,11 +19,12 @@ namespace Api.Controllers
         }
 
         [HttpGet]
+        [MapException(new[] { typeof(InvalidRequestException) }, new[] { HttpStatusCode.BadRequest })]
         public IActionResult GetWaitlists(string customerId, bool? isActive)
         {
             if (string.IsNullOrEmpty(customerId))
             {
-                return BadRequest(new { ErrorMessage = "customerId query string must be specified." });
+                throw new InvalidRequestException("customerId query string must be specified.");
             }
 
             var domainWaitlists = _waitlistService.GetWaitlists(customerId, isActive);
@@ -32,15 +34,17 @@ namespace Api.Controllers
         }
 
         [HttpPost]
+        [MapException(new[] { typeof(CustomerNotFoundException), typeof(InvalidRequestException) },
+            new[] { HttpStatusCode.NotFound, HttpStatusCode.BadRequest })]
         public IActionResult CreateWaitlist([FromBody]CreateWaitlistRequest request)
         {
             if (string.IsNullOrEmpty(request.CustomerId))
             {
-                return BadRequest(new { ErrorMessage = "CustomerId must be specified." });
+                throw new InvalidRequestException("CustomerId must be specified." );
             }
             if (request.PartySize == 0)
             {
-                return BadRequest(new { ErrorMessage = "Invalid PartySize value." });
+                throw new InvalidRequestException("PartySize must be greater than 0.");
             }
 
             var domainRequest = request.ToDomain();

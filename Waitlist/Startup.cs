@@ -43,12 +43,12 @@ namespace Api
             });
 
             //Symmetric Auth: same key is used for both signing & validating bearer tokens.
-            IConfigurationSection encryptionSection = Configuration.GetSection("Encryption");
-            Encryption encryptionConfig = encryptionSection.Get<Encryption>(); //map appsettings.json to Encryption object
-            byte[] symmetricKey = Encoding.UTF8.GetBytes(encryptionConfig.SymmetricKey);
-            services.AddAuthentication(symmetricKey);
+            IConfigurationSection authenticationSection = Configuration.GetSection("Authentication");
+            services.Configure<Authentication>(authenticationSection); //Allows the Authentication instance to be injected in TokenService's ctor
 
-            services.Configure<Encryption>(encryptionSection); //Allows the Encryption instance to be injected in TokenService's ctor
+            Authentication authenticationConfig = authenticationSection.Get<Authentication>(); //map appsettings.json to Authentication object
+            byte[] symmetricKey = Encoding.UTF8.GetBytes(authenticationConfig.SymmetricKey);
+            services.AddAuthentication(symmetricKey, authenticationConfig.ClientIds, new[] { authenticationConfig.IssuerId });
 
             services.AddDbContext<WaitlistDbContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("WaitlistDbContext"), options =>
@@ -113,7 +113,7 @@ namespace Api
 
     public static class AuthenticationServiceCollectionExtensions
     {
-        public static IServiceCollection AddAuthentication(this IServiceCollection services, byte[] symmetricKey)
+        public static IServiceCollection AddAuthentication(this IServiceCollection services, byte[] symmetricKey, string[] clientIds, string[] issuerIds)
         {
             services.AddAuthentication(authOptions =>
             {
@@ -122,12 +122,13 @@ namespace Api
             })
                 .AddJwtBearer(jwtOptions =>
                 {
-                    jwtOptions.SaveToken = true; //saves access token per request to be retrieved in controllers via HttpContext.Request.Headers[HeaderNames.Authorization]
+                    jwtOptions.SaveToken = true; //allows retrieval in controllers via HttpContext.Request.Headers[HeaderNames.Authorization], i.e. to re-use the token to make external API calls
                     jwtOptions.TokenValidationParameters = new TokenValidationParameters
                     {
-                        ValidateAudience = false, //uncomment line below when set to true
-                        //ValidAudiences = new[] { "front_end_client_id_1", "front_end_client_id_2", "..." },
-                        ValidateIssuer = false,
+                        ValidateAudience = true,
+                        ValidAudiences = clientIds,
+                        ValidateIssuer = true,
+                        ValidIssuers = issuerIds,
                         ValidateIssuerSigningKey = true,
                         IssuerSigningKey = new SymmetricSecurityKey(symmetricKey),
                         ValidateLifetime = true,

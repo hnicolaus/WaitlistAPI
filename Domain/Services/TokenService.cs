@@ -9,17 +9,17 @@ namespace Domain.Services
 {
     public class TokenService
     {
-        private Encryption encryptionSettings;
+        private readonly Authentication _authenticationConfig;
         private const int _expiryMinutes = 60;
 
-        public TokenService(IOptions<Encryption> options)
+        public TokenService(IOptions<Authentication> options)
         {
-            encryptionSettings = options.Value;
+            _authenticationConfig = options.Value;
         }
 
-        public string GetToken(string userId)
+        public string GetToken(string userId, string clientId)
         {
-            SecurityTokenDescriptor tokenDescriptor = GetTokenDescriptor(userId);
+            SecurityTokenDescriptor tokenDescriptor = GetTokenDescriptor(userId, clientId);
             JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
             SecurityToken securityToken = tokenHandler.CreateToken(tokenDescriptor); //sign the JWT with the symmetric key
             string tokenString = tokenHandler.WriteToken(securityToken); //generate string (compact) version of JWT
@@ -27,17 +27,17 @@ namespace Domain.Services
             return tokenString;
         }
 
-        private SecurityTokenDescriptor GetTokenDescriptor(string userId)
+        private SecurityTokenDescriptor GetTokenDescriptor(string userId, string clientId)
         {
-            byte[] securityKey = Encoding.UTF8.GetBytes(encryptionSettings.SymmetricKey);
+            byte[] securityKey = Encoding.UTF8.GetBytes(_authenticationConfig.SymmetricKey);
             var symmetricSecurityKey = new SymmetricSecurityKey(securityKey);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Expires = DateTime.UtcNow.AddMinutes(_expiryMinutes),
                 SigningCredentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256Signature),
-                Audience = "WaitlistApplication", //front-end
-                Issuer = "WaitlistAPI",
+                Audience = clientId,
+                Issuer = _authenticationConfig.IssuerId,
                 Subject = new ClaimsIdentity(new[]
                 {
                     new Claim(ClaimTypes.NameIdentifier, userId)

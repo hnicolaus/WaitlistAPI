@@ -1,5 +1,6 @@
 ﻿using Domain.Models;
 using Domain.Requests;
+using Microsoft.Extensions.Options;
 using System;
 using static Google.Apis.Auth.GoogleJsonWebSignature;
 
@@ -8,12 +9,14 @@ namespace Domain.Services
     public class AuthenticationService
     {
         private readonly TokenService _tokenService;
+        private readonly Authentication _authenticationConfig;
         private readonly CustomerService _customerService;
 
-        public AuthenticationService(CustomerService customerService, TokenService tokenService)
+        public AuthenticationService(CustomerService customerService, TokenService tokenService, IOptions<Authentication> authenticationConfig)
         {
             _customerService = customerService;
             _tokenService = tokenService;
+            _authenticationConfig = authenticationConfig.Value;
         }
 
         public bool AuthenticateGoogleUser(string googleIdToken, out string jwtToken)
@@ -37,7 +40,7 @@ namespace Domain.Services
                 customer = _customerService.CreateCustomer(createCustomerRequest);
             }
 
-            jwtToken = _tokenService.GetToken(customer.Id);
+            jwtToken = _tokenService.GetToken(customer.Id, validatedPayload.Audience.ToString());
             return true;
         }
 
@@ -48,11 +51,10 @@ namespace Domain.Services
             {
                 var audienceValidationSetting = new ValidationSettings
                 {
-                    //Back-end recognizes the Google Client ID of the front-end.
-                    //Validate that the ID token's claim has the client ID of the front-end.
-                    Audience = new[] { "407408718192.apps.googleusercontent.com" } //TODO: Replace Audience values with front-end's Client ID from Google!
+                    Audience = _authenticationConfig.ClientIds
                 };
                 payload = ValidateAsync(googleIdToken, audienceValidationSetting).Result;
+            
             }
             catch (Exception)
             {

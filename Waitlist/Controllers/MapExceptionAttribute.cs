@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Api.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using System;
 using System.Linq;
@@ -17,8 +18,14 @@ namespace Api.Controllers
             if (exceptionTypes != null && statusCodes != null && exceptionTypes.Length == statusCodes.Length)
             {
                 //Intended usage: exceptionType[i] should correspond to statusCode[i]
-                _exceptionTypes = exceptionTypes;
-                _statusCodes = statusCodes;
+                //Always map NotAuthorizedException to HttpStatusCode.Unauthorized here so controllers don't have to explicitly map it.
+                _exceptionTypes = new Type[exceptionTypes.Length + 1];
+                Array.Copy(exceptionTypes, _exceptionTypes, exceptionTypes.Length);
+                _exceptionTypes[_exceptionTypes.Length - 1] = typeof(NotAuthorizedException);
+
+                _statusCodes = new HttpStatusCode[statusCodes.Length + 1];
+                Array.Copy(statusCodes, _statusCodes, statusCodes.Length);
+                _statusCodes[_statusCodes.Length - 1] = HttpStatusCode.Unauthorized;
             }
             else
             {

@@ -1,4 +1,5 @@
-﻿using Api.Helpers;
+﻿using Api.Authorization;
+using Api.Helpers;
 using Api.Models;
 using Domain.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -34,22 +35,30 @@ namespace Api.Controllers
                 throw new InvalidRequestException("Id cannot be empty.");
             }
 
+            Authorize.TokenAgainstResource(HttpContext.User, id);
+
             var domainCustomer = _customerService.GetCustomer(id);
 
             var result = new Customer(domainCustomer);
             return Ok(result);
         }
 
+        [Authorize]
         [HttpPatch]
         [Route("{id}")]
         [MapException(new[] { typeof(CustomerNotFoundException), typeof(InvalidRequestException) },
             new[] { HttpStatusCode.NotFound, HttpStatusCode.BadRequest })]
         public IActionResult UpdateCustomer(string id, [FromBody] JsonPatchDocument<DomainCustomer> patchDoc)
         {
+            //NOTE: In the request header, clients have to specify Content-Type: application/json-patch+json.
+            //Otherwise, JsonPatchDocument serialization will fail.
             if (string.IsNullOrEmpty(id))
             {
                 throw new InvalidRequestException("Id cannot be empty.");
             }
+
+            Authorize.TokenAgainstResource(HttpContext.User, id);
+
             if (patchDoc == null || !patchDoc.Operations.Any())
             {
                 throw new InvalidRequestException("Request cannot be empty.");

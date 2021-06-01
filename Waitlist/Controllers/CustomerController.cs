@@ -16,11 +16,12 @@ namespace Api.Controllers
     public class CustomerController : ControllerBase
     {
         public readonly CustomerService _customerService;
-        private const string _phoneNumberPatchPath = "/phoneNumber";
+        private string[] _allowedPatchFields;
 
         public CustomerController(CustomerService waitlistService)
         {
             _customerService = waitlistService;
+            _allowedPatchFields = new[] { "/phoneNumber" };
         }
 
         [Authorize]
@@ -43,6 +44,8 @@ namespace Api.Controllers
             return Ok(result);
         }
 
+        //NOTE: In the request header, clients have to specify Content-Type: application/json-patch+json.
+        //Otherwise, JsonPatchDocument serialization will fail.
         [Authorize]
         [HttpPatch]
         [Route("{id}")]
@@ -50,8 +53,6 @@ namespace Api.Controllers
             new[] { HttpStatusCode.NotFound, HttpStatusCode.BadRequest })]
         public IActionResult UpdateCustomer(string id, [FromBody] JsonPatchDocument<DomainCustomer> patchDoc)
         {
-            //NOTE: In the request header, clients have to specify Content-Type: application/json-patch+json.
-            //Otherwise, JsonPatchDocument serialization will fail.
             if (string.IsNullOrEmpty(id))
             {
                 throw new InvalidRequestException("Id cannot be empty.");
@@ -65,14 +66,13 @@ namespace Api.Controllers
             }
 
             var requestedFields = patchDoc.Operations.Select(o => o.path);
-            var restrictedFields = requestedFields.Where(field => !field.Equals(_phoneNumberPatchPath));
+            var restrictedFields = requestedFields.Where(field => !_allowedPatchFields.Contains(field));
             if (restrictedFields.Any())
             {
                 throw new InvalidRequestException("Cannot update the following restricted field(s): " + string.Join(", ", restrictedFields));
             }
 
-            var requestedPhoneNumber = patchDoc.Operations.First(o => o.path.Equals(_phoneNumberPatchPath)).value.ToString();
-            Validator.ValidatePhoneNumber(requestedPhoneNumber);
+            Validate.UpdateCustomerPhoneNumber(patchDoc);
 
             var domainCustomer = _customerService.GetCustomer(id);
 

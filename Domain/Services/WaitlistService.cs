@@ -1,6 +1,7 @@
 ﻿using Domain.Models;
 using Domain.Repositories;
 using Domain.Requests;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -37,9 +38,26 @@ namespace Domain.Services
             return _waitlistRepository.GetWaitlists(customerId, isActive);
         }
 
+        public Waitlist GetWaitlist(int waitlistId)
+        {
+            var waitlist = _waitlistRepository.GetWaitlist(waitlistId);
+            if (waitlist == null)
+            {
+                throw new WaitlistNotFoundException(waitlistId);
+            }
+
+            return waitlist;
+        }
+
         private Waitlist GetActiveWaitlist(string customerId)
         {
             return GetWaitlists(customerId, isActive: true).SingleOrDefault();
+        }
+
+        public void SaveChanges()
+        {
+            //This currently needs to be exposed for PATCH.
+            _waitlistRepository.Save();
         }
     }
 }

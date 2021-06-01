@@ -49,5 +49,10 @@ namespace Infrastructure.Repositories
         {
             return _context.Customers.AsQueryable().SingleOrDefault(customer => customer.Id == customerId);
         }
+
+        public Waitlist GetWaitlist(int waitlistId)
+        {
+            return _context.Waitlists.SingleOrDefault(waitlist => waitlist.Id == waitlistId);
+        }
     }
 }

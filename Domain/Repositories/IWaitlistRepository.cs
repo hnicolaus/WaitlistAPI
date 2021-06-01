@@ -9,5 +9,6 @@ namespace Domain.Repositories
         void Add(Waitlist waitlist);
         void Save();
         Customer GetCustomer(string customerId);
+        Waitlist GetWaitlist(int waitlistId);
     }
 }

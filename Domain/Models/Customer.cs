@@ -6,6 +6,11 @@ namespace Domain.Models
 {
     public class Customer
     {
+        public static readonly Dictionary<string, string> PropNameToPatchPath = new Dictionary<string, string>
+        {
+            [nameof(Customer.Phone.PhoneNumber)] = "/phone/phoneNumber"
+        };
+
         //EF requires empty ctor for model binding
         public Customer()
         {
@@ -19,7 +24,11 @@ namespace Domain.Models
             LastName = request.LastName;
             Email = request.Email;
 
-            IsPhoneNumberValidated = false;
+            Phone = new Phone
+            {
+                IsValidated = false
+            };
+
             CreatedDateTime = DateTime.Now;
         }
 
@@ -27,10 +36,15 @@ namespace Domain.Models
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Email { get; set; }
-        public string PhoneNumber { get; set; }
-        public bool IsPhoneNumberValidated { get; set; }
-        public string PhoneNumberValidationCode { get; set; }
+        public Phone Phone { get; set; }
         public DateTime CreatedDateTime { get; set; }
         public virtual IEnumerable<Waitlist> Waitlists { get; set; } = new List<Waitlist>();
+    }
+
+    public class Phone
+    {
+        public string PhoneNumber { get; set; }
+        public bool IsValidated { get; set; }
+        public string VerificationCode { get; set; }
     }
 }

@@ -1,7 +1,6 @@
 ﻿using Domain.Models;
 using Domain.Repositories;
 using Domain.Requests;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -22,8 +21,17 @@ namespace Domain.Services
         {
             var customer = _customerService.GetCustomer(request.CustomerId);
 
-            var activeWaitlist = GetActiveWaitlist(customer.Id);
-            if (activeWaitlist != null)
+            if (string.IsNullOrEmpty(customer.Phone.PhoneNumber))
+            {
+                throw new InvalidRequestException($"Customer {customer.Id} has not provided a phone number.");
+            }
+            if (!customer.Phone.IsValidated)
+            {
+                throw new InvalidRequestException($"Phone number for customer {customer.Id} has not been validated.");
+            }
+
+            var activeWaitlist = GetWaitlists(customer.Id, isActive: true);
+            if (activeWaitlist.Any())
             {
                 throw new InvalidRequestException($"Customer {customer.Id} has an existing active waitlist");
             }
@@ -47,11 +55,6 @@ namespace Domain.Services
             }
 
             return waitlist;
-        }
-
-        private Waitlist GetActiveWaitlist(string customerId)
-        {
-            return GetWaitlists(customerId, isActive: true).SingleOrDefault();
         }
 
         public void SaveChanges()

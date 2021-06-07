@@ -7,19 +7,20 @@ namespace Api.Helpers
 {
     public class Validate
     {
-        
-        public static bool UpdateCustomerPhoneNumber(JsonPatchDocument<DomainCustomer> patchDoc)
+
+        public static void PatchCustomerFields(JsonPatchDocument<DomainCustomer> patchDoc, string[] allowedPatchFields)
         {
-            var customerPhoneNumberPath = "/phoneNumber";
-            var updatePhoneNumberOperation = patchDoc.Operations.FirstOrDefault(o => o.path.Equals(customerPhoneNumberPath));
-            if (updatePhoneNumberOperation == null)
+            var requestedFields = patchDoc.Operations.Select(o => o.path);
+            var restrictedFields = requestedFields.Where(field => !allowedPatchFields.Contains(field));
+            if (restrictedFields.Any())
             {
-                return true;
+                throw new InvalidRequestException("Cannot update the following restricted field(s): " + string.Join(", ", restrictedFields));
             }
-
-            var requestedPhoneNumber = updatePhoneNumberOperation.value.ToString();
-
-            //TODO: Validate US phone number.
+        }
+        
+        public static bool PhoneNumberFormat(string requestedPhoneNumber)
+        {
+            //TODO: Validate US phone number format.
             var result = true;
             if (result == false)
             {

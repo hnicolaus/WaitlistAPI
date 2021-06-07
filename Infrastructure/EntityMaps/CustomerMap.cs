@@ -10,14 +10,19 @@ namespace Infrastructure.ModelMaps
         {
             builder.ToTable(schema: "dbo", name: "Customer").HasKey(w => w.Id);
 
-            builder.Property(w => w.Id);
-            builder.Property(w => w.FirstName).HasColumnName(nameof(Customer.FirstName));
-            builder.Property(w => w.LastName).HasColumnName(nameof(Customer.LastName));
-            builder.Property(w => w.Email).HasColumnName(nameof(Customer.Email));
-            builder.Property(w => w.PhoneNumber).HasColumnName(nameof(Customer.PhoneNumber));
-            builder.Property(w => w.IsPhoneNumberValidated).HasColumnName(nameof(Customer.IsPhoneNumberValidated));
-            builder.Property(w => w.PhoneNumberValidationCode).HasColumnName(nameof(Customer.PhoneNumberValidationCode));
-            builder.Property(w => w.CreatedDateTime).HasColumnName(nameof(Customer.CreatedDateTime));
+            builder.Property(c => c.Id);
+            builder.Property(c => c.FirstName).HasColumnName(nameof(Customer.FirstName));
+            builder.Property(c => c.LastName).HasColumnName(nameof(Customer.LastName));
+            builder.Property(c => c.Email).HasColumnName(nameof(Customer.Email));
+            builder.Property(c => c.CreatedDateTime).HasColumnName(nameof(Customer.CreatedDateTime));
+
+            builder.OwnsOne(c => c.Phone,
+                    phone =>
+                    {
+                        phone.Property(c => c.PhoneNumber).HasColumnName("PhoneNumber");
+                        phone.Property(p => p.IsValidated).HasColumnName("IsPhoneNumberValidated");
+                        phone.Property(p => p.VerificationCode).HasColumnName("PhoneNumberValidationCode");
+                    });
         }
     }
 }

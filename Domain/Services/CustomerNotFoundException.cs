@@ -2,10 +2,10 @@
 
 namespace Domain.Services
 {
-    public class WaitlistNotFoundException : Exception
+    public class CustomerNotFoundException : Exception
     {
-        public WaitlistNotFoundException() { }
+        public CustomerNotFoundException() { }
 
-        public WaitlistNotFoundException(int waitlistId) : base($"Waitlist with ID {waitlistId} does not exist.") { }
+        public CustomerNotFoundException(string customerId) : base($"Customer with ID {customerId} does not exist.") { }
     }
 }

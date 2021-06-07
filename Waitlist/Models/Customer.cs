@@ -1,7 +1,6 @@
 ﻿using System;
 using DomainCustomer = Domain.Models.Customer;
 
-
 namespace Api.Models
 {
     public class Customer
@@ -12,7 +11,11 @@ namespace Api.Models
             FirstName = domainCustomer.FirstName;
             LastName = domainCustomer.LastName;
             Email = domainCustomer.Email;
-            PhoneNumber = domainCustomer.PhoneNumber;
+            Phone = new Phone
+            {
+                PhoneNumber = domainCustomer.Phone.PhoneNumber,
+                IsValidated = domainCustomer.Phone.IsValidated,
+            };
             CreatedDateTime = domainCustomer.CreatedDateTime;
         }
 
@@ -20,7 +23,13 @@ namespace Api.Models
         public string Email { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
-        public string PhoneNumber { get; set; }
+        public Phone Phone { get; set; }
         public DateTime CreatedDateTime { get; set; }
+    }
+
+    public class Phone
+    {
+        public string PhoneNumber { get; set; }
+        public bool IsValidated { get; set; }
     }
 }

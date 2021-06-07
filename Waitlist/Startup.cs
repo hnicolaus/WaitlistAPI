@@ -18,6 +18,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using Domain;
+using Infrastructure;
+using Twilio.Clients;
 
 namespace Api
 {
@@ -58,6 +60,12 @@ namespace Api
                 }
             ));
 
+            services.AddHttpClient<ITwilioRestClient, TwilioClient>();
+
+            IConfigurationSection twilioSection = Configuration.GetSection("TwilioConfig");
+            services.Configure<TwilioConfig>(twilioSection); //Allows the Authentication instance to be injected in TokenService's ctor
+
+            services.AddTransient<ITextMessageClient, TextMessageClient>();
             services.AddTransient<WaitlistService>();
             services.AddTransient<CustomerService>();
             services.AddTransient<AuthenticationService>();

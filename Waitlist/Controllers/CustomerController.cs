@@ -1,6 +1,7 @@
 ﻿using Api.Authorization;
 using Api.Helpers;
 using Api.Models;
+using Api.Requests;
 using Domain.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
@@ -21,12 +22,12 @@ namespace Api.Controllers
         public CustomerController(CustomerService waitlistService)
         {
             _customerService = waitlistService;
-            _allowedPatchFields = new[] { "/phoneNumber" };
+            _allowedPatchFields = DomainCustomer.PropNameToPatchPath.Values.ToArray();
         }
 
         [Authorize]
         [HttpGet]
-        [Route("{id}", Name = "GetCustomer")]
+        [Route("{id}")]
         [MapException(new[] { typeof(CustomerNotFoundException), typeof(InvalidRequestException) },
             new[] { HttpStatusCode.NotFound, HttpStatusCode.BadRequest })]
         public IActionResult GetCustomer(string id)
@@ -42,6 +43,25 @@ namespace Api.Controllers
 
             var result = new Customer(domainCustomer);
             return Ok(result);
+        }
+
+        [Authorize]
+        [HttpPost]
+        [Route("{id}/phone-number/verify")]
+        [MapException(new[] { typeof(CustomerNotFoundException), typeof(InvalidRequestException), typeof(InternalServiceException) },
+            new[] { HttpStatusCode.NotFound, HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError })]
+        public IActionResult VerifyPhoneNumber(string id, [FromBody] VerifyPhoneNumberRequest request)
+        {
+            if (string.IsNullOrEmpty(id))
+            {
+                throw new InvalidRequestException("Id cannot be empty.");
+            }
+
+            Authorize.TokenAgainstResource(HttpContext.User, id);
+
+            _customerService.VerifyPhoneNumber(id, request.VerificationCode);
+
+            return Ok();
         }
 
         //NOTE: In the request header, clients have to specify Content-Type: application/json-patch+json.
@@ -65,14 +85,15 @@ namespace Api.Controllers
                 throw new InvalidRequestException("Request cannot be empty.");
             }
 
-            var requestedFields = patchDoc.Operations.Select(o => o.path);
-            var restrictedFields = requestedFields.Where(field => !_allowedPatchFields.Contains(field));
-            if (restrictedFields.Any())
-            {
-                throw new InvalidRequestException("Cannot update the following restricted field(s): " + string.Join(", ", restrictedFields));
-            }
+            Validate.PatchCustomerFields(patchDoc, _allowedPatchFields);
 
-            Validate.UpdateCustomerPhoneNumber(patchDoc);
+            var phoneNumberPath = DomainCustomer.PropNameToPatchPath[nameof(DomainCustomer.Phone.PhoneNumber)];
+            var requestedPhoneNumber = patchDoc.Operations.SingleOrDefault(o => o.path.Equals(phoneNumberPath))?.value.ToString();
+            var isPhoneNumberRequest = requestedPhoneNumber != null;
+            if (isPhoneNumberRequest)
+            {
+                Validate.PhoneNumberFormat(requestedPhoneNumber);
+            }
 
             var domainCustomer = _customerService.GetCustomer(id);
 
@@ -83,7 +104,8 @@ namespace Api.Controllers
                 return BadRequest(ModelState);
             }
 
-            _customerService.SaveChanges();
+            _customerService.UpdateCustomer(domainCustomer, isPhoneNumberRequest);
+
             return Ok();
         }
     }

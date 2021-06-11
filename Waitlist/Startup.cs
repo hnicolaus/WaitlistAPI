@@ -66,12 +66,14 @@ namespace Api
             services.Configure<TwilioConfig>(twilioSection); //Allows the Authentication instance to be injected in TokenService's ctor
 
             services.AddTransient<ITextMessageClient, TextMessageClient>();
-            services.AddTransient<WaitlistService>();
+            services.AddTransient<PartyService>();
             services.AddTransient<CustomerService>();
+            services.AddTransient<TableService>();
             services.AddTransient<AuthenticationService>();
             services.AddTransient<TokenService>();
             services.AddTransient<ICustomerRepository, CustomerRepository>();
-            services.AddTransient<IWaitlistRepository, WaitlistRepository>();
+            services.AddTransient<IPartyRepository, PartyRepository>();
+            services.AddTransient<ITableRepository, TableRepository>();
             services.AddScoped<IWaitlistDbContext, WaitlistDbContext>();
             services.AddSwaggerGen(c =>
             {

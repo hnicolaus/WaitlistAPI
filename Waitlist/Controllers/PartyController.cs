@@ -7,77 +7,71 @@ using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 using System.Net;
-using DomainWaitlist = Domain.Models.Waitlist;
+using DomainParty = Domain.Models.Party;
 
 namespace Api.Controllers
 {
     [ApiController]
-    [Route("waitlists")]
-    public class WaitlistController : ControllerBase
+    [Route("parties")]
+    public class PartyController : ControllerBase
     {
-        public readonly WaitlistService _waitlistService;
+        public readonly PartyService _partyService;
         private readonly string[] _allowedPatchFields;
 
-        public WaitlistController(WaitlistService waitlistService)
+        public PartyController(PartyService partyService)
         {
-            _waitlistService = waitlistService;
-            _allowedPatchFields = new[] { "/isNotified" };
+            _partyService = partyService;
+            _allowedPatchFields = DomainParty.PropNameToPatchPath.Values.ToArray();
         }
 
         [Authorize]
         [HttpGet]
         [MapException(new[] { typeof(InvalidRequestException) }, new[] { HttpStatusCode.BadRequest })]
-        public IActionResult GetWaitlists(string customerId, bool? isActive)
+        public IActionResult GetParties(string customerId, bool? isActive)
         {
-            if (string.IsNullOrEmpty(customerId))
+            if (string.IsNullOrEmpty(customerId) && !isActive.HasValue)
             {
-                throw new InvalidRequestException("customerId query string must be specified.");
+                throw new InvalidRequestException("No query string was provided.");
             }
 
             Authorize.TokenAgainstResource(HttpContext.User, customerId);
 
-            var domainWaitlists = _waitlistService.GetWaitlists(customerId, isActive);
+            var domainParties = _partyService.GetParties(customerId, isActive);
 
-            var apiWaitlists = domainWaitlists.Select(domainWaitlist => new Waitlist(domainWaitlist));
-            return Ok(apiWaitlists);
+            var apiParties = domainParties.Select(domainParty => new Party(domainParty));
+            return Ok(apiParties);
         }
 
         [Authorize]
         [HttpPost]
         [MapException(new[] { typeof(CustomerNotFoundException), typeof(InvalidRequestException) },
             new[] { HttpStatusCode.NotFound, HttpStatusCode.BadRequest })]
-        public IActionResult CreateWaitlist([FromBody]CreateWaitlistRequest request)
+        public IActionResult CreateParty([FromBody]CreatePartyRequest request)
         {
-            if (string.IsNullOrEmpty(request.CustomerId))
-            {
-                throw new InvalidRequestException("CustomerId must be specified." );
-            }
-
             Authorize.TokenAgainstResource(HttpContext.User, request.CustomerId);
 
-            if (request.PartySize == 0)
+            if (request.PartySize <= 0)
             {
                 throw new InvalidRequestException("PartySize must be greater than 0.");
             }
 
             var domainRequest = request.ToDomain();
-            _waitlistService.CreateWaitlist(domainRequest);
+            _partyService.CreateParty(domainRequest);
 
             return Ok();
         }
 
         //NOTE: In the request header, clients have to specify Content-Type: application/json-patch+json.
         //Otherwise, JsonPatchDocument serialization will fail.
-        [Authorize]
         [HttpPatch]
         [Route("{id}")]
-        [MapException(new[] { typeof(WaitlistNotFoundException), typeof(InvalidRequestException) },
+        [MapException(new[] { typeof(PartyNotFoundException), typeof(InvalidRequestException) },
             new[] { HttpStatusCode.NotFound, HttpStatusCode.BadRequest })]
-        public IActionResult UpdateWaitlist(int id, [FromBody] JsonPatchDocument<DomainWaitlist> patchDoc)
+        public IActionResult UpdateParty(int id, [FromBody] JsonPatchDocument<DomainParty> patchDoc)
         {
-            var domainWaitlist = _waitlistService.GetWaitlist(id);
+            var domainParty = _partyService.GetParty(id);
 
-            Authorize.TokenAgainstResource(HttpContext.User, domainWaitlist.CustomerId);
+            Authorize.TokenAgainstResource(HttpContext.User, domainParty.CustomerId);
 
             if (patchDoc == null || !patchDoc.Operations.Any())
             {
@@ -91,14 +85,14 @@ namespace Api.Controllers
                 throw new InvalidRequestException("Cannot update the following restricted field(s): " + string.Join(", ", restrictedFields));
             }
 
-            patchDoc.ApplyTo(domainWaitlist, ModelState);
+            patchDoc.ApplyTo(domainParty, ModelState);
 
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            _waitlistService.SaveChanges();
+            _partyService.SaveChanges();
             return Ok();
         }
     }

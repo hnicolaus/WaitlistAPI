@@ -1,16 +1,23 @@
 ﻿using Domain.Requests;
 using System;
+using System.Collections.Generic;
 
 namespace Domain.Models
 {
-    public class Waitlist
+    public class Party
     {
+        public static readonly Dictionary<string, string> PropNameToPatchPath = new Dictionary<string, string>
+        {
+            [nameof(Party.IsActive)] = "/isActive",
+            [nameof(Party.IsNotified)] = "/isNotified",
+        };
+
         //EF requires empty ctor for model binding
-        public Waitlist()
+        public Party()
         {
         }
 
-        public Waitlist(CreateWaitlistRequest request)
+        public Party(CreatePartyRequest request)
         {
             CustomerId = request.CustomerId;
             PartySize = request.PartySize;

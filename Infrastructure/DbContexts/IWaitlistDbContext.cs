@@ -5,8 +5,9 @@ namespace Infrastructure.DbContexts
 {
     public interface IWaitlistDbContext
     {
-        DbSet<Waitlist> Waitlists { get; set; }
+        DbSet<Party> Parties { get; set; }
         DbSet<Customer> Customers { get; set; }
+        DbSet<Table> Tables { get; set; }
 
         void Save();
     }

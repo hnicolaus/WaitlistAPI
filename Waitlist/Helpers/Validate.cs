@@ -7,7 +7,6 @@ namespace Api.Helpers
 {
     public class Validate
     {
-
         public static void PatchCustomerFields(JsonPatchDocument<DomainCustomer> patchDoc, string[] allowedPatchFields)
         {
             var requestedFields = patchDoc.Operations.Select(o => o.path);

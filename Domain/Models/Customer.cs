@@ -38,7 +38,7 @@ namespace Domain.Models
         public string Email { get; set; }
         public Phone Phone { get; set; }
         public DateTime CreatedDateTime { get; set; }
-        public virtual IEnumerable<Waitlist> Waitlists { get; set; } = new List<Waitlist>();
+        public virtual IEnumerable<Party> Parties { get; set; } = new List<Party>();
     }
 
     public class Phone

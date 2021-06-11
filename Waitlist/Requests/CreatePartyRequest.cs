@@ -1,9 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using DomainCreateWaitlistRequest = Domain.Requests.CreateWaitlistRequest;
+using DomainCreateWaitlistRequest = Domain.Requests.CreatePartyRequest;
 
 namespace Api.Requests
 {
-    public class CreateWaitlistRequest
+    public class CreatePartyRequest
     {
         [Required]
         public string CustomerId { get; set; }

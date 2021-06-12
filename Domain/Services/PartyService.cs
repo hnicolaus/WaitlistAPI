@@ -1,4 +1,5 @@
-﻿using Domain.Models;
+﻿using Domain.Exceptions;
+using Domain.Models;
 using Domain.Repositories;
 using Domain.Requests;
 using System.Collections.Generic;

@@ -74,6 +74,7 @@ namespace Api
             services.AddTransient<ICustomerRepository, CustomerRepository>();
             services.AddTransient<IPartyRepository, PartyRepository>();
             services.AddTransient<ITableRepository, TableRepository>();
+            services.AddTransient<IAdminRepository, AdminRepository>();
             services.AddScoped<IWaitlistDbContext, WaitlistDbContext>();
             services.AddSwaggerGen(c =>
             {

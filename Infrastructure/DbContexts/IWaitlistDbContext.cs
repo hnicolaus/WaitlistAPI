@@ -8,6 +8,7 @@ namespace Infrastructure.DbContexts
         DbSet<Party> Parties { get; set; }
         DbSet<Customer> Customers { get; set; }
         DbSet<Table> Tables { get; set; }
+        DbSet<Admin> Admins { get; set; }
 
         void Save();
     }

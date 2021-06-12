@@ -1,5 +1,6 @@
 ﻿using Api.Models;
 using Api.Requests;
+using Domain.Exceptions;
 using Domain.Services;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;

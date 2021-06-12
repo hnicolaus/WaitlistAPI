@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Runtime.Serialization;
 
-namespace Domain.Services
+namespace Domain.Exceptions
 {
     public class InvalidRequestException : Exception
     {

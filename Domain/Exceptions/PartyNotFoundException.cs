@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Domain.Services
+namespace Domain.Exceptions
 {
     public class PartyNotFoundException : Exception
     {

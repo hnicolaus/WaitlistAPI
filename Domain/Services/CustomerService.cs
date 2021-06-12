@@ -1,7 +1,8 @@
-﻿using Domain.Models;
+﻿using Domain.Exceptions;
+using Domain.Helpers;
+using Domain.Models;
 using Domain.Repositories;
 using Domain.Requests;
-using System;
 
 namespace Domain.Services
 {
@@ -51,17 +52,12 @@ namespace Domain.Services
         {
             if (isPhoneNumberRequest)
             {
-                var verificationCode = GeneratePhoneVerificationCode();
+                var verificationCode = Helper.GenerateRandomString();
                 customer.Phone.VerificationCode = verificationCode;
                 SendPhoneVerificationCode(customer.Phone.PhoneNumber, verificationCode);
             }
 
             SaveChanges();
-        }
-
-        private string GeneratePhoneVerificationCode()
-        {
-            return Guid.NewGuid().ToString().Substring(0, 5).ToUpper();
         }
 
         private void SendPhoneVerificationCode(string phoneNumber, string verificationCode)

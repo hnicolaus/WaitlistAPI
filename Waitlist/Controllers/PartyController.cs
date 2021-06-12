@@ -1,6 +1,7 @@
 ﻿using Api.Authorization;
 using Api.Models;
 using Api.Requests;
+using Domain.Exceptions;
 using Domain.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;

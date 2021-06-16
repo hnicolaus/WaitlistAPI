@@ -10,7 +10,7 @@
         public int Id { get; set; }
         public string Username { get; set; }
         public string Password { get; set; }
-        public string AuthenticationCode { get; set; }
+        public SMSVerification LoginVerification { get; set; }
         public string PhoneNumber { get; set; }
     }
 }

@@ -4,7 +4,7 @@
     {
         public readonly string Username;
         public readonly string Password;
-        public readonly string AuthenticationCode;
+        public readonly string VerificationCode;
         public readonly string ClientId;
 
         public AuthenticateAdminRequest(string username,
@@ -14,7 +14,7 @@
         {
             Username = username;
             Password = password;
-            AuthenticationCode = authenticationCode;
+            VerificationCode = authenticationCode;
             ClientId = clientId;
         }
     }

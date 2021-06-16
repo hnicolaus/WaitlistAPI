@@ -1,4 +1,5 @@
 ﻿using Api.Authorization;
+using Api.Helpers;
 using Api.Models;
 using Api.Requests;
 using Domain.Exceptions;
@@ -6,6 +7,7 @@ using Domain.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Linq;
 using System.Net;
 using DomainParty = Domain.Models.Party;
@@ -27,7 +29,8 @@ namespace Api.Controllers
 
         [Authorize]
         [HttpGet]
-        [MapException(new[] { typeof(InvalidRequestException) }, new[] { HttpStatusCode.BadRequest })]
+        [MapException(typeof(InvalidRequestException), HttpStatusCode.BadRequest)]
+        [MapException(typeof(NotAuthorizedException), HttpStatusCode.Unauthorized)]
         public IActionResult GetParties(string customerId, bool? isActive)
         {
             if (string.IsNullOrEmpty(customerId) && !isActive.HasValue)
@@ -35,7 +38,10 @@ namespace Api.Controllers
                 throw new InvalidRequestException("No query string was provided.");
             }
 
-            Authorize.TokenAgainstResource(HttpContext.User, customerId);
+            if (!string.IsNullOrEmpty(customerId))
+            {
+                Authorize.TokenAgainstResource(HttpContext.User, customerId);
+            }
 
             var domainParties = _partyService.GetParties(customerId, isActive);
 
@@ -43,10 +49,11 @@ namespace Api.Controllers
             return Ok(apiParties);
         }
 
-        [Authorize]
+        [Authorize(Roles = "Customer")]
         [HttpPost]
-        [MapException(new[] { typeof(CustomerNotFoundException), typeof(InvalidRequestException) },
-            new[] { HttpStatusCode.NotFound, HttpStatusCode.BadRequest })]
+        [MapException(typeof(CustomerNotFoundException), HttpStatusCode.NotFound)]
+        [MapException(typeof(InvalidRequestException), HttpStatusCode.BadRequest)]
+        [MapException(typeof(NotAuthorizedException), HttpStatusCode.Unauthorized)]
         public IActionResult CreateParty([FromBody]CreatePartyRequest request)
         {
             Authorize.TokenAgainstResource(HttpContext.User, request.CustomerId);
@@ -64,27 +71,20 @@ namespace Api.Controllers
 
         //NOTE: In the request header, clients have to specify Content-Type: application/json-patch+json.
         //Otherwise, JsonPatchDocument serialization will fail.
+        [Authorize(Roles = "Admin")]
         [HttpPatch]
         [Route("{id}")]
-        [MapException(new[] { typeof(PartyNotFoundException), typeof(InvalidRequestException) },
-            new[] { HttpStatusCode.NotFound, HttpStatusCode.BadRequest })]
+        [MapException(typeof(PartyNotFoundException), HttpStatusCode.NotFound)]
+        [MapException(typeof(InvalidRequestException), HttpStatusCode.BadRequest)]
+        [MapException(typeof(NotAuthorizedException), HttpStatusCode.Unauthorized)]
         public IActionResult UpdateParty(int id, [FromBody] JsonPatchDocument<DomainParty> patchDoc)
         {
             var domainParty = _partyService.GetParty(id);
 
             Authorize.TokenAgainstResource(HttpContext.User, domainParty.CustomerId);
 
-            if (patchDoc == null || !patchDoc.Operations.Any())
-            {
-                throw new InvalidRequestException("Request cannot be empty.");
-            }
-
-            var requestedFields = patchDoc.Operations.Select(o => o.path);
-            var restrictedFields = requestedFields.Where(field => !_allowedPatchFields.Contains(field));
-            if (restrictedFields.Any())
-            {
-                throw new InvalidRequestException("Cannot update the following restricted field(s): " + string.Join(", ", restrictedFields));
-            }
+            Validate<DomainParty>.EmptyPatchRequest(patchDoc);
+            Validate<DomainParty>.PatchRestrictedFields(patchDoc, _allowedPatchFields);
 
             patchDoc.ApplyTo(domainParty, ModelState);
 
@@ -93,8 +93,30 @@ namespace Api.Controllers
                 return BadRequest(ModelState);
             }
 
-            _partyService.SaveChanges();
+            var isNotifyRequest = ValidateNotifyRequest(domainParty, patchDoc);
+            _partyService.UpdateParty(domainParty, isNotifyRequest);
+
             return Ok();
+        }
+
+        private static bool ValidateNotifyRequest(DomainParty party, JsonPatchDocument<DomainParty> patchDoc)
+        {
+            var notifyPath = DomainParty.PropNameToPatchPath[nameof(DomainParty.IsNotified)];
+            var notifyRequest = patchDoc.Operations.SingleOrDefault(o => o.path.Equals(notifyPath));
+            var isNotifyRequest = notifyRequest != null;
+            if (!isNotifyRequest)
+            {
+                return false;
+            }
+
+            var requestedIsNotified = Convert.ToBoolean(notifyRequest.value);
+            if (requestedIsNotified == party.IsNotified)
+            {
+                patchDoc.Operations.Remove(notifyRequest);
+                return false;
+            }
+
+            return true;
         }
     }
 }

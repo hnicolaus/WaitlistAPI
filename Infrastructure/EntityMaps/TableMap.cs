@@ -11,9 +11,9 @@ namespace Infrastructure.ModelMaps
             builder.ToTable(schema: "dbo", name: "Table").HasKey(w => w.Id);
 
             builder.Property(t => t.Id).ValueGeneratedOnAdd();
-            builder.Property(t => t.Number).HasColumnName(nameof(Table.Number));
-            builder.Property(t => t.PartySize).HasColumnName(nameof(Table.PartySize));
-            builder.Property(t => t.IsAvailable).HasColumnName(nameof(Table.IsAvailable));
+            builder.Property(t => t.Number).HasColumnName("Number");
+            builder.Property(t => t.PartySize).HasColumnName("PartySize");
+            builder.Property(t => t.IsAvailable).HasColumnName("IsAvailable");
         }
     }
 }

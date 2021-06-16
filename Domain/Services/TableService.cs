@@ -2,6 +2,7 @@
 using Domain.Models;
 using Domain.Repositories;
 using Domain.Requests;
+using System;
 using System.Collections.Generic;
 
 namespace Domain.Services
@@ -17,20 +18,31 @@ namespace Domain.Services
 
         public Table CreateTable(CreateTableRequest request)
         {
-            if (request.Number < 0)
+            if (request.Number <= 0)
             {
-                throw new InvalidRequestException("Table number cannot be a negative number.");
+                throw new InvalidRequestException("Table number cannot be 0 or a negative number.");
             }
             if (request.PartySize <= 0)
             {
                 throw new InvalidRequestException("Table's supported PartySize must be bigger than 0.");
             }
 
+            ValidateTableNumberUnique(request.Number);
+
             var table = new Table(request);
             _tableRepository.Add(table);
             SaveChanges();
 
             return table;
+        }
+
+        public void ValidateTableNumberUnique(int tableNumber)
+        {
+            var existingTable = _tableRepository.GetTableByNumber(tableNumber);
+            if (existingTable != null)
+            {
+                throw new InvalidRequestException($"Table with number {tableNumber} already exists.");
+            }
         }
 
         public IEnumerable<Table> GetTables(int? partySize, bool? isAvailable)
@@ -40,7 +52,7 @@ namespace Domain.Services
 
         public Table GetTable(int tableId)
         {
-            var table = _tableRepository.GetTable(tableId);
+            var table = _tableRepository.GetTableById(tableId);
             if (table == null)
             {
                 throw new TableNotFoundException(tableId);
@@ -51,7 +63,7 @@ namespace Domain.Services
 
         public void DeleteTable(int tableId)
         {
-            var table = _tableRepository.GetTable(tableId);
+            var table = _tableRepository.GetTableById(tableId);
             if (table == null)
             {
                 throw new TableNotFoundException(tableId);

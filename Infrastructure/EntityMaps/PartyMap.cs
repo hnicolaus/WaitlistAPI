@@ -20,11 +20,11 @@ namespace Infrastructure.ModelMaps
             builder.ToTable(schema: "dbo", name: "Party").HasKey(w => w.Id);
 
             builder.Property(p => p.Id).ValueGeneratedOnAdd();
-            builder.Property(p => p.CreatedDateTime).HasColumnName(nameof(Party.CreatedDateTime));
-            builder.Property(p => p.PartySize).HasColumnName(nameof(Party.PartySize));
-            builder.Property(p => p.IsNotified).HasColumnName(nameof(Party.IsNotified));
-            builder.Property(p => p.IsActive).HasColumnName(nameof(Party.IsActive));
-            builder.Property(p => p.CustomerId).HasColumnName(nameof(Party.CustomerId));
+            builder.Property(p => p.CreatedDateTime).HasColumnName("CreatedDateTime");
+            builder.Property(p => p.PartySize).HasColumnName("PartySize");
+            builder.Property(p => p.IsNotified).HasColumnName("IsNotified");
+            builder.Property(p => p.IsActive).HasColumnName("IsActive");
+            builder.Property(p => p.CustomerId).HasColumnName("CustomerId");
 
             builder.HasOne(p => p.Customer).WithMany(c => c.Parties).HasForeignKey(p => p.CustomerId);
         }

@@ -14,7 +14,7 @@ namespace Api.Models
             Phone = new Phone
             {
                 PhoneNumber = domainCustomer.Phone.PhoneNumber,
-                IsValidated = domainCustomer.Phone.IsValidated,
+                IsVerified = domainCustomer.Phone.IsVerified,
             };
             CreatedDateTime = domainCustomer.CreatedDateTime;
         }
@@ -30,6 +30,6 @@ namespace Api.Models
     public class Phone
     {
         public string PhoneNumber { get; set; }
-        public bool IsValidated { get; set; }
+        public bool IsVerified { get; set; }
     }
 }

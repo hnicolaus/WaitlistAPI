@@ -1,7 +1,5 @@
 ﻿using Domain.Exceptions;
-using Domain.Helpers;
 using Domain.Models;
-using Domain.Repositories;
 using Domain.Requests;
 using Microsoft.Extensions.Options;
 using System;
@@ -14,29 +12,25 @@ namespace Domain.Services
         private readonly TokenService _tokenService;
         private readonly Authentication _authenticationConfig;
         private readonly CustomerService _customerService;
-        private readonly IAdminRepository _adminRepository;
-        public ITextMessageClient _textMessageClient;
+        private readonly AdminService _adminService;
 
         public AuthenticationService(CustomerService customerService,
             TokenService tokenService,
             IOptions<Authentication> authenticationConfig,
-            IAdminRepository adminRepository,
-            ITextMessageClient textMessageClient)
+            AdminService adminService)
         {
             _customerService = customerService;
             _tokenService = tokenService;
-            _adminRepository = adminRepository;
-            _textMessageClient = textMessageClient;
+            _adminService = adminService;
             _authenticationConfig = authenticationConfig.Value;
         }
 
-        public bool AuthenticateGoogleUser(string googleIdToken, out string jwtToken)
+        public void AuthenticateGoogleUser(string googleIdToken, out string jwtToken)
         {
             Payload validatedPayload;
             if (!ValidateGoogleIdToken(googleIdToken, out validatedPayload))
             {
-                jwtToken = null;
-                return false;
+                throw new InvalidRequestException("ID token is invalid.");
             }
 
             var customerId = validatedPayload.Subject;
@@ -51,45 +45,7 @@ namespace Domain.Services
                 customer = _customerService.CreateCustomer(createCustomerRequest);
             }
 
-            jwtToken = _tokenService.GetToken(customer.Id, validatedPayload.Audience.ToString());
-            return true;
-        }
-
-        public void AdminLogin(string userName, string password)
-        {
-            var admin = _adminRepository.GetAdmin(userName, password);
-            if (admin == null)
-            {
-                throw new AdminNotFoundException();
-            }
-
-            var authenticationCode = Helper.GenerateRandomString(length: 8);
-            admin.AuthenticationCode = authenticationCode;
-            _adminRepository.SaveChanges();
-
-            _textMessageClient.SendTextMessage(admin.PhoneNumber, "Front-desk login code: " + authenticationCode);
-        }
-
-        public void AuthenticateAdminUser(AuthenticateAdminRequest request, out string jwtToken)
-        {
-            var admin = _adminRepository.GetAdmin(request.Username, request.Password);
-            if (admin == null)
-            {
-                throw new AdminNotFoundException();
-            }
-            if (admin.AuthenticationCode != request.AuthenticationCode)
-            {
-                throw new InvalidRequestException("AuthenticationCode code invalid.");
-            }
-            if (!Array.Exists(_authenticationConfig.ClientIds, c => c == request.ClientId))
-            {
-                throw new NotAuthorizedException("Client ID is unauthorized.");
-            }
-
-            jwtToken = _tokenService.GetToken(admin.Id.ToString(), request.ClientId.ToString());
-
-            admin.AuthenticationCode = null;
-            _adminRepository.SaveChanges();
+            jwtToken = _tokenService.GetToken(customer.Id, validatedPayload.Audience.ToString(), TokenType.Customer);
         }
 
         private bool ValidateGoogleIdToken(string googleIdToken, out Payload user)
@@ -102,7 +58,7 @@ namespace Domain.Services
                     Audience = _authenticationConfig.ClientIds
                 };
                 payload = ValidateAsync(googleIdToken, audienceValidationSetting).Result;
-            
+
             }
             catch (Exception)
             {
@@ -112,6 +68,29 @@ namespace Domain.Services
 
             user = payload;
             return true;
+        }
+
+        public void AdminLogin(string userName, string password)
+        {
+            var admin = _adminService.GetAdmin(userName, password);
+            _adminService.UpdateAdminVerificationCode(admin);
+            _adminService.SendLoginVerificationSMS(admin);
+        }
+
+        public void AuthenticateAdminUser(AuthenticateAdminRequest request, out string jwtToken)
+        {
+            var admin = _adminService.GetAdmin(request.Username, request.Password);
+
+            _adminService.VerifyLoginVerification(admin, request.VerificationCode);
+
+            if (!Array.Exists(_authenticationConfig.ClientIds, c => c == request.ClientId))
+            {
+                throw new NotAuthorizedException("Client ID is unauthorized.");
+            }
+
+            _adminService.ResetLoginVerification(admin);
+
+            jwtToken = _tokenService.GetToken(admin.Id.ToString(), request.ClientId.ToString(), TokenType.Admin);
         }
     }
 }

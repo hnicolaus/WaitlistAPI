@@ -20,22 +20,20 @@ namespace Api.Controllers
         //Google sign-in is the only way to sign-up/sign-in.
         //Treat every successful Google sign-in as if they are an existing user.
         [HttpPost]
+        [MapException(typeof(InvalidRequestException), HttpStatusCode.BadRequest)]
         [Route("google-user")]
         public IActionResult Authenticate(GoogleUserAuthenticationRequest request)
         {
             string jwtToken;
-            if (!_authenticationService.AuthenticateGoogleUser(request.IdToken, out jwtToken))
-            {
-                return BadRequest("Google ID token is invalid.");
-            }
+            _authenticationService.AuthenticateGoogleUser(request.IdToken, out jwtToken);
 
             return Ok(new { JwtToken = jwtToken });
         }
 
         [HttpPost]
-        [MapException(new[] { typeof(AdminNotFoundException) }, new[] { HttpStatusCode.NotFound })]
-        [Route("admin/login")]
-        public IActionResult AuthenticateAdmin(AdminLoginRequest request)
+        [MapException(typeof(AdminNotFoundException), HttpStatusCode.NotFound)]
+        [Route("login-admin")]
+        public IActionResult AdminLogin(AdminLoginRequest request)
         {
             _authenticationService.AdminLogin(request.Username, request.Password);
 
@@ -43,9 +41,10 @@ namespace Api.Controllers
         }
 
         [HttpPost]
-        [MapException(new[] { typeof(AdminNotFoundException), typeof(InvalidRequestException) },
-            new[] { HttpStatusCode.NotFound, HttpStatusCode.BadRequest })]
-        [Route("admin")]
+        [MapException(typeof(AdminNotFoundException), HttpStatusCode.NotFound)]
+        [MapException(typeof(InvalidRequestException), HttpStatusCode.BadRequest)]
+        [MapException(typeof(NotAuthorizedException), HttpStatusCode.Unauthorized)]
+        [Route("verify-admin-login")]
         public IActionResult AuthenticateAdmin(AdminAuthenticationRequest request)
         {
             string jwtToken;

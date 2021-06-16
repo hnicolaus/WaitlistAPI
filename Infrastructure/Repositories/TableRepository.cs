@@ -40,11 +40,16 @@ namespace Infrastructure.Repositories
             _context.Save();
         }
 
-        public Table GetTable(int tableId)
+        public Table GetTableById(int tableId)
         {
             return _context.Tables.SingleOrDefault(table => table.Id == tableId);
         }
-        
+
+        public Table GetTableByNumber(int tableNumber)
+        {
+            return _context.Tables.SingleOrDefault(table => table.Number == tableNumber);
+        }
+
         public void Remove(Table table)
         {
             _context.Tables.Remove(table);

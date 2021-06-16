@@ -6,7 +6,7 @@ namespace Api.Requests
     public class AdminAuthenticationRequest : AdminLoginRequest
     {
         [Required]
-        public string AuthenticationCode { get; set; }
+        public string VerificationCode { get; set; }
 
         [Required]
         public string ClientId { get; set; }
@@ -16,7 +16,7 @@ namespace Api.Requests
             return new DomainAuthenticateAdminRequest(
                 Username,
                 Password,
-                AuthenticationCode,
+                VerificationCode,
                 ClientId);
         }
     }

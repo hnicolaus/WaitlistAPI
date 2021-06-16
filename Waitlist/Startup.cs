@@ -71,6 +71,7 @@ namespace Api
             services.AddTransient<TableService>();
             services.AddTransient<AuthenticationService>();
             services.AddTransient<TokenService>();
+            services.AddTransient<AdminService>();
             services.AddTransient<ICustomerRepository, CustomerRepository>();
             services.AddTransient<IPartyRepository, PartyRepository>();
             services.AddTransient<ITableRepository, TableRepository>();

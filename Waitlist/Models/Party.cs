@@ -12,6 +12,7 @@ namespace Api.Models
             PartySize = domainParty.PartySize;
             CreatedDateTime = domainParty.CreatedDateTime;
             IsNotified = domainParty.IsNotified;
+            IsActive = domainParty.IsActive;
         }
 
         public int Id { get; set; }
@@ -19,5 +20,6 @@ namespace Api.Models
         public int PartySize { get; set; }
         public DateTime CreatedDateTime { get; set; }
         public bool IsNotified { get; set; }
+        public bool IsActive { get; set; }
     }
 }

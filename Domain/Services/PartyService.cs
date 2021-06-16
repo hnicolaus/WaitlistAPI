@@ -11,11 +11,15 @@ namespace Domain.Services
     {
         public CustomerService _customerService;
         public IPartyRepository _partyRepository;
+        public ITextMessageClient _textMessageClient;
 
-        public PartyService(CustomerService customerService, IPartyRepository partyRepository)
+        public PartyService(CustomerService customerService,
+            IPartyRepository partyRepository,
+            ITextMessageClient textMessageClient)
         {
             _customerService = customerService;
             _partyRepository = partyRepository;
+            _textMessageClient = textMessageClient;
         }
 
         public void CreateParty(CreatePartyRequest request)
@@ -26,7 +30,7 @@ namespace Domain.Services
             {
                 throw new InvalidRequestException($"Customer {customer.Id} has not provided a phone number.");
             }
-            if (!customer.Phone.IsValidated)
+            if (!customer.Phone.IsVerified)
             {
                 throw new InvalidRequestException($"Phone number for customer {customer.Id} has not been validated.");
             }
@@ -63,10 +67,29 @@ namespace Domain.Services
             return party;
         }
 
+        //This currently needs to be exposed for PATCH.
         public void SaveChanges()
         {
-            //This currently needs to be exposed for PATCH.
             _partyRepository.Save();
+        }
+
+        public void UpdateParty(Party party, bool isNotifyRequest)
+        {
+            if (isNotifyRequest)
+            {
+                SendNotifyPartySMS(party);
+                party.IsNotified = true;
+            }
+
+            SaveChanges();
+        }
+
+        private void SendNotifyPartySMS(Party party)
+        {
+            var message = "This message is sent on behalf of the Restaurant Waitlist. ";
+            message += "Your seat is ready in approximately 10 minutes. Please make sure your entire party is present in the restaurant or you risk losing your seat.";
+
+            _textMessageClient.SendTextMessage(party.Customer.Phone.PhoneNumber, message);
         }
     }
 }

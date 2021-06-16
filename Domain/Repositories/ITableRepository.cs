@@ -8,7 +8,8 @@ namespace Domain.Repositories
         IEnumerable<Table> GetTables(int? partySize, bool? isAvailable);
         void Add(Table table);
         void Save();
-        Table GetTable(int tableId);
+        Table GetTableById(int tableId);
+        Table GetTableByNumber(int tableNumber);
         void Remove(Table table);
     }
 }

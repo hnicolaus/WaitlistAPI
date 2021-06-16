@@ -1,15 +1,18 @@
-﻿using Api.Models;
+﻿using Api.Helpers;
+using Api.Models;
 using Api.Requests;
 using Domain.Exceptions;
 using Domain.Services;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Linq;
 using System.Net;
 using DomainTable = Domain.Models.Table;
 
 namespace Api.Controllers
 {
+    //[Authorize(Roles = "Admin")]
     [ApiController]
     [Route("tables")]
     public class TableController : ControllerBase
@@ -24,7 +27,7 @@ namespace Api.Controllers
         }
 
         [HttpGet]
-        [MapException(new[] { typeof(InvalidRequestException) }, new[] { HttpStatusCode.BadRequest })]
+        [MapException(typeof(InvalidRequestException), HttpStatusCode.BadRequest)]
         public IActionResult GetTables(int? partySize, bool? isAvailable)
         {
             var domainTables = _tableService.GetTables(partySize, isAvailable);
@@ -34,7 +37,7 @@ namespace Api.Controllers
         }
 
         [HttpPost]
-        [MapException(new[] { typeof(InvalidRequestException) }, new[] { HttpStatusCode.BadRequest })]
+        [MapException(typeof(InvalidRequestException), HttpStatusCode.BadRequest)]
         public IActionResult CreateTable([FromBody] CreateTableRequest request)
         {
             var domainRequest = request.ToDomain();
@@ -45,7 +48,7 @@ namespace Api.Controllers
 
         [HttpDelete]
         [Route("{id}")]
-        [MapException(new[] { typeof(TableNotFoundException) }, new[] { HttpStatusCode.NotFound })]
+        [MapException(typeof(TableNotFoundException), HttpStatusCode.NotFound)]
         public IActionResult DeleteTable(int id)
         {
             _tableService.DeleteTable(id);
@@ -57,23 +60,20 @@ namespace Api.Controllers
         //Otherwise, JsonPatchDocument serialization will fail.
         [HttpPatch]
         [Route("{id}")]
-        [MapException(new[] { typeof(TableNotFoundException), typeof(InvalidRequestException) },
-            new[] { HttpStatusCode.NotFound, HttpStatusCode.BadRequest })]
+        [MapException(typeof(TableNotFoundException), HttpStatusCode.NotFound)]
+        [MapException(typeof(InvalidRequestException), HttpStatusCode.BadRequest)]
         public IActionResult UpdateTable(int id, [FromBody] JsonPatchDocument<DomainTable> patchDoc)
         {
             var domainTable = _tableService.GetTable(id);
 
-            if (patchDoc == null || !patchDoc.Operations.Any())
-            {
-                throw new InvalidRequestException("Request cannot be empty.");
-            }
+            Validate<DomainTable>.EmptyPatchRequest(patchDoc);
+            Validate<DomainTable>.PatchRestrictedFields(patchDoc, _allowedPatchFields);
 
-            var requestedFields = patchDoc.Operations.Select(o => o.path);
-            var restrictedFields = requestedFields.Where(field => !_allowedPatchFields.Contains(field));
-            if (restrictedFields.Any())
-            {
-                throw new InvalidRequestException("Cannot update the following restricted field(s): " + string.Join(", ", restrictedFields));
-            }
+            var isValidTableNumberRequest = ValidateUpdateTableNumberRequest(domainTable, patchDoc);
+            var isValidTableSizeRequest = ValidateUpdateTableSizeRequest(domainTable, patchDoc);
+
+            //isSaveRequired = ValidateA() || ValidateB() - patchDoc.Operations.Remove() in ValidateB() will not get executed if ValidateA() returns true.
+            var isSaveRequired = isValidTableNumberRequest || isValidTableSizeRequest;
 
             patchDoc.ApplyTo(domainTable, ModelState);
 
@@ -82,8 +82,61 @@ namespace Api.Controllers
                 return BadRequest(ModelState);
             }
 
-            _tableService.SaveChanges();
+            if (isSaveRequired)
+            {
+                _tableService.SaveChanges();
+            }
+
             return Ok();
+        }
+
+        private bool ValidateUpdateTableNumberRequest(DomainTable table, JsonPatchDocument<DomainTable> patchDoc)
+        {
+            var tableNumberPath = DomainTable.PropNameToPatchPath[nameof(DomainTable.Number)];
+            var tableNumberRequest = patchDoc.Operations.SingleOrDefault(o => o.path.Equals(tableNumberPath));
+            var isTableNumberRequest = tableNumberRequest != null;
+            if (!isTableNumberRequest)
+            {
+                return false;
+            }
+
+            var requestedTableNumber = Convert.ToInt32(tableNumberRequest.value);
+            if (requestedTableNumber <= 0)
+            {
+                throw new InvalidRequestException("Table number cannot be 0 or a negative number.");
+            }
+            if (requestedTableNumber == table.Number)
+            {
+                patchDoc.Operations.Remove(tableNumberRequest);
+                return false;
+            }
+
+            _tableService.ValidateTableNumberUnique(requestedTableNumber);
+            return true;
+        }
+
+        private static bool ValidateUpdateTableSizeRequest(DomainTable table, JsonPatchDocument<DomainTable> patchDoc)
+        {
+            var tableSizePath = DomainTable.PropNameToPatchPath[nameof(DomainTable.PartySize)];
+            var tableSizeRequest = patchDoc.Operations.SingleOrDefault(o => o.path.Equals(tableSizePath));
+            var isTableSizeRequest = tableSizeRequest != null;
+            if (!isTableSizeRequest)
+            {
+                return false;
+            }
+
+            var requestedTableSize = Convert.ToInt32(tableSizeRequest.value);
+            if (requestedTableSize <= 0)
+            {
+                throw new InvalidRequestException("Table's supported PartySize must be bigger than 0.");
+            }
+            if (requestedTableSize == table.PartySize)
+            {
+                patchDoc.Operations.Remove(tableSizeRequest);
+                return false;
+            }
+
+            return true;
         }
     }
 }

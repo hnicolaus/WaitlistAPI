@@ -7,12 +7,14 @@ using Domain.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Net;
 using DomainCustomer = Domain.Models.Customer;
 
 namespace Api.Controllers
 {
+    [Authorize(Roles = "Customer")]
     [ApiController]
     [Route("customers")]
     public class CustomerController : ControllerBase
@@ -26,38 +28,44 @@ namespace Api.Controllers
             _allowedPatchFields = DomainCustomer.PropNameToPatchPath.Values.ToArray();
         }
 
-        [Authorize]
         [HttpGet]
         [Route("{id}")]
-        [MapException(new[] { typeof(CustomerNotFoundException), typeof(InvalidRequestException) },
-            new[] { HttpStatusCode.NotFound, HttpStatusCode.BadRequest })]
-        public IActionResult GetCustomer(string id)
+        [MapException(typeof(CustomerNotFoundException), HttpStatusCode.NotFound)]
+        [MapException(typeof(InvalidRequestException), HttpStatusCode.BadRequest)]
+        [MapException(typeof(NotAuthorizedException), HttpStatusCode.Unauthorized)]
+        public IActionResult GetCustomer([Required] string id)
         {
-            if (string.IsNullOrEmpty(id))
-            {
-                throw new InvalidRequestException("Id cannot be empty.");
-            }
-
             Authorize.TokenAgainstResource(HttpContext.User, id);
 
             var domainCustomer = _customerService.GetCustomer(id);
 
-            var result = new Customer(domainCustomer);
-            return Ok(result);
+            var apiCustomer = new Customer(domainCustomer);
+            return Ok(apiCustomer);
         }
 
-        [Authorize]
         [HttpPost]
-        [Route("{id}/phone-number/verify")]
-        [MapException(new[] { typeof(CustomerNotFoundException), typeof(InvalidRequestException), typeof(InternalServiceException) },
-            new[] { HttpStatusCode.NotFound, HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError })]
-        public IActionResult VerifyPhoneNumber(string id, [FromBody] VerifyPhoneNumberRequest request)
+        [Route("{id}/phone/send-verification")]
+        [MapException(typeof(CustomerNotFoundException), HttpStatusCode.NotFound)]
+        [MapException(typeof(InvalidRequestException), HttpStatusCode.BadRequest)]
+        [MapException(typeof(InternalServiceException), HttpStatusCode.InternalServerError)]
+        [MapException(typeof(NotAuthorizedException), HttpStatusCode.Unauthorized)]
+        public IActionResult SendPhoneVerification([Required] string id)
         {
-            if (string.IsNullOrEmpty(id))
-            {
-                throw new InvalidRequestException("Id cannot be empty.");
-            }
+            Authorize.TokenAgainstResource(HttpContext.User, id);
 
+            _customerService.SendPhoneVerification(id);
+
+            return Ok();
+        }
+
+        [HttpPost]
+        [Route("{id}/phone/verify")]
+        [MapException(typeof(CustomerNotFoundException), HttpStatusCode.NotFound)]
+        [MapException(typeof(InvalidRequestException), HttpStatusCode.BadRequest)]
+        [MapException(typeof(InternalServiceException), HttpStatusCode.InternalServerError)]
+        [MapException(typeof(NotAuthorizedException), HttpStatusCode.Unauthorized)]
+        public IActionResult VerifyPhoneNumber([Required] string id, [FromBody] VerifyPhoneNumberRequest request)
+        {
             Authorize.TokenAgainstResource(HttpContext.User, id);
 
             _customerService.VerifyPhoneNumber(id, request.VerificationCode);
@@ -67,36 +75,21 @@ namespace Api.Controllers
 
         //NOTE: In the request header, clients have to specify Content-Type: application/json-patch+json.
         //Otherwise, JsonPatchDocument serialization will fail.
-        [Authorize]
         [HttpPatch]
         [Route("{id}")]
-        [MapException(new[] { typeof(CustomerNotFoundException), typeof(InvalidRequestException) },
-            new[] { HttpStatusCode.NotFound, HttpStatusCode.BadRequest })]
-        public IActionResult UpdateCustomer(string id, [FromBody] JsonPatchDocument<DomainCustomer> patchDoc)
+        [MapException(typeof(CustomerNotFoundException), HttpStatusCode.NotFound)]
+        [MapException(typeof(InvalidRequestException), HttpStatusCode.BadRequest)]
+        [MapException(typeof(NotAuthorizedException), HttpStatusCode.Unauthorized)]
+        public IActionResult UpdateCustomer([Required] string id, [FromBody] JsonPatchDocument<DomainCustomer> patchDoc)
         {
-            if (string.IsNullOrEmpty(id))
-            {
-                throw new InvalidRequestException("Id cannot be empty.");
-            }
-
             Authorize.TokenAgainstResource(HttpContext.User, id);
 
-            if (patchDoc == null || !patchDoc.Operations.Any())
-            {
-                throw new InvalidRequestException("Request cannot be empty.");
-            }
-
-            Validate.PatchCustomerFields(patchDoc, _allowedPatchFields);
-
-            var phoneNumberPath = DomainCustomer.PropNameToPatchPath[nameof(DomainCustomer.Phone.PhoneNumber)];
-            var requestedPhoneNumber = patchDoc.Operations.SingleOrDefault(o => o.path.Equals(phoneNumberPath))?.value.ToString();
-            var isPhoneNumberRequest = requestedPhoneNumber != null;
-            if (isPhoneNumberRequest)
-            {
-                Validate.PhoneNumberFormat(requestedPhoneNumber);
-            }
+            Validate<DomainCustomer>.EmptyPatchRequest(patchDoc);
+            Validate<DomainCustomer>.PatchRestrictedFields(patchDoc, _allowedPatchFields);
 
             var domainCustomer = _customerService.GetCustomer(id);
+
+            var isPhoneNumberRequest = ValidateUpdatePhoneNumberRequest(domainCustomer, patchDoc);
 
             patchDoc.ApplyTo(domainCustomer, ModelState);
 
@@ -108,6 +101,34 @@ namespace Api.Controllers
             _customerService.UpdateCustomer(domainCustomer, isPhoneNumberRequest);
 
             return Ok();
+        }
+
+        private static bool ValidateUpdatePhoneNumberRequest(DomainCustomer customer, JsonPatchDocument<DomainCustomer> patchDoc)
+        {
+            var phoneNumberPath = DomainCustomer.PropNameToPatchPath[nameof(DomainCustomer.Phone.PhoneNumber)];
+            var phoneNumberRequest = patchDoc.Operations.SingleOrDefault(o => o.path.Equals(phoneNumberPath));
+            var isPhoneNumberRequest = phoneNumberRequest != null;
+            if (!isPhoneNumberRequest)
+            {
+                return false;
+            }
+
+            var requestedPhoneNumber = phoneNumberRequest?.value.ToString();
+
+            Validate.PhoneNumberFormat(requestedPhoneNumber);
+                
+            if (string.IsNullOrEmpty(requestedPhoneNumber))
+            {
+                throw new InvalidRequestException("Phone number cannot be null or empty.");
+            }
+
+            if (customer.Phone?.PhoneNumber == requestedPhoneNumber)
+            {
+                patchDoc.Operations.Remove(phoneNumberRequest);
+                return false;
+            }
+
+            return true;
         }
     }
 }

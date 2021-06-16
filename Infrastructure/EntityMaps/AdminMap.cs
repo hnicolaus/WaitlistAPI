@@ -11,10 +11,16 @@ namespace Infrastructure.ModelMaps
             builder.ToTable(schema: "dbo", name: "Admin").HasKey(w => w.Id);
 
             builder.Property(c => c.Id).ValueGeneratedOnAdd();
-            builder.Property(c => c.Username).HasColumnName(nameof(Admin.Username));
-            builder.Property(c => c.Password).HasColumnName(nameof(Admin.Password));
-            builder.Property(c => c.PhoneNumber).HasColumnName(nameof(Admin.PhoneNumber));
-            builder.Property(c => c.AuthenticationCode).HasColumnName(nameof(Admin.AuthenticationCode));
+            builder.Property(c => c.Username).HasColumnName("Username");
+            builder.Property(c => c.Password).HasColumnName("Password");
+            builder.Property(c => c.PhoneNumber).HasColumnName("PhoneNumber");
+
+            builder.OwnsOne(c => c.LoginVerification,
+                    phone =>
+                    {
+                        phone.Property(p => p.VerificationCode).HasColumnName("LoginVerificationCode");
+                        phone.Property(p => p.ExpiryDateTime).HasColumnName("VerificationExpiryDateTime");
+                    });
         }
     }
 }

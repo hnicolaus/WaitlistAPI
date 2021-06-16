@@ -26,7 +26,7 @@ namespace Domain.Models
 
             Phone = new Phone
             {
-                IsValidated = false
+                IsVerified = false
             };
 
             CreatedDateTime = DateTime.Now;
@@ -44,7 +44,7 @@ namespace Domain.Models
     public class Phone
     {
         public string PhoneNumber { get; set; }
-        public bool IsValidated { get; set; }
-        public string VerificationCode { get; set; }
+        public bool IsVerified { get; set; }
+        public SMSVerification Verification { get; set; }
     }
 }

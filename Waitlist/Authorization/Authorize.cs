@@ -1,5 +1,5 @@
 ﻿using Domain.Exceptions;
-using System;
+using Domain.Models;
 using System.Security.Claims;
 
 namespace Api.Authorization
@@ -8,7 +8,8 @@ namespace Api.Authorization
     {
         public static void TokenAgainstResource(ClaimsPrincipal tokenClaims, string requestedUserId)
         {
-            if (tokenClaims.FindFirst(ClaimTypes.NameIdentifier).Value != requestedUserId)
+            if (tokenClaims.FindFirst(ClaimTypes.Role).Value == TokenType.Customer.ToString()
+                && tokenClaims.FindFirst(ClaimTypes.NameIdentifier).Value != requestedUserId)
             {
                 throw new NotAuthorizedException("Token not authorized to access resource");
             }
